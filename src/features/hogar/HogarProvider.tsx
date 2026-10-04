@@ -4,9 +4,26 @@
  * sin pedirla dos veces. Ver src/features/hogar/README.md.
  */
 import { createContext, use, useEffect, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
 
 import { api } from '@/api/client';
 import type { Evento, HogarResumen, Perfil } from '@/api/types';
+
+/**
+ * Cada cuánto se piden los eventos con la app abierta. Es el reemplazo provisorio de las push
+ * (RF8): con FCM el aviso llega solo y esto puede espaciarse o quitarse.
+ */
+const INTERVALO_ACTUALIZACION_MS = 30_000;
+
+/**
+ * Aplica una lista nueva sin "desresolver" alertas: si una consulta salió antes de que el
+ * familiar marcara una alerta como resuelta, su respuesta trae `resuelta: false` y la alerta
+ * volvería a aparecer fijada por unos segundos.
+ */
+function fusionarEventos(previos: Evento[], nuevos: Evento[]): Evento[] {
+  const resueltas = new Set(previos.filter((e) => e.resuelta).map((e) => e.id));
+  return nuevos.map((e) => (resueltas.has(e.id) && !e.resuelta ? { ...e, resuelta: true } : e));
+}
 
 interface HogarContextValue {
   perfil: Perfil | null;
@@ -72,6 +89,37 @@ export function HogarProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Actualización automática: cada 30 s con la app en primer plano, y apenas vuelve a primer
+  // plano (el familiar abre la app después de un rato). En segundo plano no consulta: iOS y
+  // Android pausan los timers igual, y así no gasta batería ni datos.
+  // Es silenciosa: no muestra el spinner de "tirar para actualizar" y, si falla, deja la lista
+  // que ya había (el próximo intento la corrige).
+  const hogarId = hogar?.id;
+  useEffect(() => {
+    if (hogarId == null) return;
+    let vigente = true;
+    const actualizar = () => {
+      api
+        .listarEventos(hogarId)
+        .then((nuevos) => vigente && setEventos((previos) => fusionarEventos(previos, nuevos)))
+        .catch(() => {});
+    };
+
+    let intervalo = setInterval(actualizar, INTERVALO_ACTUALIZACION_MS);
+    const suscripcion = AppState.addEventListener('change', (estado) => {
+      clearInterval(intervalo);
+      if (estado === 'active') {
+        actualizar();
+        intervalo = setInterval(actualizar, INTERVALO_ACTUALIZACION_MS);
+      }
+    });
+    return () => {
+      vigente = false;
+      clearInterval(intervalo);
+      suscripcion.remove();
+    };
+  }, [hogarId]);
+
   const value: HogarContextValue = {
     perfil,
     hogar,
@@ -83,7 +131,8 @@ export function HogarProvider({ children }: { children: ReactNode }) {
       if (!hogar) return cargarTodo();
       setRefrescando(true);
       try {
-        setEventos(await api.listarEventos(hogar.id));
+        const nuevos = await api.listarEventos(hogar.id);
+        setEventos((previos) => fusionarEventos(previos, nuevos));
         setError(null);
       } catch (e) {
         setError(mensajeDeError(e));

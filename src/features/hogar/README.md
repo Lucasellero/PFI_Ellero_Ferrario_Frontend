@@ -25,7 +25,15 @@ const { perfil, hogar, eventos, cargando, refrescando, error, recargar, marcarRe
 - **Sin librería de datos** (React Query, etc.). Con 3 pantallas y una sola lista alcanza un
   contexto; si aparecen paginación o caché por pantalla, reevaluar.
 
+- **Actualización automática (provisoria hasta las push):** con la app en primer plano pide los
+  eventos cada 30 s (`INTERVALO_ACTUALIZACION_MS`) y una vez apenas vuelve a primer plano
+  (`AppState`). En segundo plano no consulta. Es silenciosa: sin spinner y, si falla, queda la
+  lista anterior. De paso, los "hace 5 min" se recalculan en cada vuelta.
+- **Las alertas resueltas no se "desresuelven":** si una consulta salió antes de marcar una
+  alerta y vuelve después, `fusionarEventos` conserva el `resuelta: true` local para que la
+  alerta no reaparezca fijada unos segundos.
+
 ## Pendiente
 
-- Refrescar automáticamente al recibir una push (RF8) y al volver la app a primer plano.
+- Refrescar al recibir una push (RF8); con eso, el intervalo de 30 s puede espaciarse o quitarse.
 - Paginación / filtros por fecha cuando el backend los soporte (RF13); hoy trae los últimos 200.

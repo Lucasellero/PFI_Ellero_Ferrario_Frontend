@@ -4,10 +4,11 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View }
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { api } from '@/api/client';
-import type { Periodo, ResumenRutina } from '@/api/types';
+import type { Evento, Periodo, ResumenRutina } from '@/api/types';
 import { Chip } from '@/components/Chip';
 import { EncabezadoPantalla } from '@/components/EncabezadoPantalla';
 import { EstadoCarga } from '@/components/EstadoCarga';
+import { DetalleAlertaSheet } from '@/features/eventos/DetalleAlertaSheet';
 import { EventoCard } from '@/features/eventos/EventoCard';
 import { primerNombre } from '@/features/eventos/formato';
 import { esVisibleEnFeed } from '@/features/eventos/presentacion';
@@ -35,8 +36,9 @@ function desde(periodo: Periodo): Date {
  * de SU propia rutina (la línea base de `baseline/`, RF6) + los eventos relevantes del período.
  */
 export function ReportesScreen() {
-  const { hogar, eventos, cargando, refrescando, error, recargar } = useHogar();
+  const { hogar, eventos, cargando, refrescando, error, recargar, marcarResuelta } = useHogar();
   const [periodo, setPeriodo] = useState<Periodo>('semana');
+  const [seleccionado, setSeleccionado] = useState<Evento | null>(null);
   const { colors, typography } = useTema();
   const styles = useEstilos(crearEstilos);
   // El resultado se guarda junto con el período que lo pidió: si no coincide con el período
@@ -116,7 +118,9 @@ export function ReportesScreen() {
         <View style={styles.seccion}>
           <Text style={typography.seccion}>{config.eventos}</Text>
           {delPeriodo.length > 0 ? (
-            delPeriodo.map((e) => <EventoCard key={e.id} evento={e} residente={residente} />)
+            delPeriodo.map((e) => (
+              <EventoCard key={e.id} evento={e} residente={residente} onPress={setSeleccionado} />
+            ))
           ) : (
             <View style={styles.sinDesvios}>
               <Feather name="check" size={20} color={colors.rutinaTexto} />
@@ -125,6 +129,14 @@ export function ReportesScreen() {
           )}
         </View>
       </ScrollView>
+
+      <DetalleAlertaSheet
+        evento={seleccionado}
+        eventos={eventos}
+        hogar={hogar}
+        onCerrar={() => setSeleccionado(null)}
+        onResolver={(e) => marcarResuelta(e.id)}
+      />
     </SafeAreaView>
   );
 }

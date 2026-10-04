@@ -6,7 +6,7 @@ import { radius, spacing, useEstilos, useTema, type Tema } from '@/theme';
 
 import { cuandoCorto } from './formato';
 import { presentar } from './presentacion';
-import { coloresSeveridad, requiereAtencion, severidadDe } from './severidad';
+import { coloresSeveridad, ETIQUETA_SEVERIDAD, requiereAtencion, severidadDe } from './severidad';
 
 interface Props {
   evento: Evento;
@@ -28,13 +28,22 @@ export function EventoCard({ evento, residente, onPress }: Props) {
   const { titulo, descripcion, icono } = presentar(evento);
   const pendiente = requiereAtencion(evento);
   const atenuada = severidad === 'rutina' || evento.resuelta;
+  const cuando = cuandoCorto(new Date(evento.occurred_at));
+
+  // Lo que la tarjeta dice con color (severidad, punto de pendiente) también tiene que llegar
+  // en palabras al lector de pantalla (VoiceOver / TalkBack).
+  const estado = pendiente ? 'Sin atender' : evento.resuelta && severidad !== 'rutina' ? 'Atendida' : '';
+  const etiquetaAccesible = [ETIQUETA_SEVERIDAD[severidad], estado, titulo, descripcion, cuando]
+    .filter(Boolean)
+    .join('. ');
 
   return (
     <Pressable
       onPress={onPress ? () => onPress(evento) : undefined}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={`${titulo}. ${descripcion}`}
+      accessibilityLabel={etiquetaAccesible}
+      accessibilityHint={onPress ? 'Abre el detalle del evento' : undefined}
       style={({ pressed }) => [
         styles.card,
         { borderLeftColor: fuerte },
@@ -47,7 +56,7 @@ export function EventoCard({ evento, residente, onPress }: Props) {
 
       <View style={styles.cuerpo}>
         <View style={styles.meta}>
-          <Text style={styles.hora}>{cuandoCorto(new Date(evento.occurred_at))}</Text>
+          <Text style={styles.hora}>{cuando}</Text>
           <Text style={styles.residente}>{residente}</Text>
           {evento.resuelta && severidad !== 'rutina' && <Text style={styles.resuelta}>Atendida</Text>}
         </View>

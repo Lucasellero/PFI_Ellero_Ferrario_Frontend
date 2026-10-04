@@ -9,6 +9,15 @@ Notificaciones y Reportes; **no armar textos ni colores de eventos en las pantal
 | `presentacion.ts` | Evento → título, descripción e ícono en español. `esVisibleEnFeed` filtra los eventos que no tienen sentido mostrar. |
 | `formato.ts` | Fechas y duraciones en español ("Jueves 13 de agosto", "2 h 40 min", "hace 8 minutos"). |
 | `EventoCard.tsx` | Tarjeta del mockup: borde de color, ícono, hora + residente, título, descripción, punto de no atendida. |
+| `DetalleAlertaSheet.tsx` | Detalle de un evento (mockup 03): hoja inferior con datos, "Llamar a…" y "Marcar como resuelta". Lo abren Notificaciones y Reportes; decisiones de diseño en `features/notificaciones/README.md`. |
+
+## Accesibilidad
+
+Todo lo que la tarjeta comunica con color también se dice en palabras para VoiceOver (iOS) y
+TalkBack (Android). La etiqueta accesible de `EventoCard` es *severidad · estado · título ·
+descripción · cuándo*, por ejemplo: "Alerta urgente. Sin atender. Posible caída detectada.
+Baño. 10:42". Los nombres de severidad salen de `ETIQUETA_SEVERIDAD` (`severidad.ts`), los
+mismos que muestra la etiqueta del detalle.
 
 ## Regla de severidad (semáforo del informe)
 

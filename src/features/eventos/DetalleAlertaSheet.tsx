@@ -5,10 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Evento, HogarResumen } from '@/api/types';
 import { Boton } from '@/components/Boton';
-import { cuandoConDia, duracion, haceCuanto, hora, primerNombre } from '@/features/eventos/formato';
-import { presentar } from '@/features/eventos/presentacion';
-import { coloresSeveridad, requiereAtencion, severidadDe, type Severidad } from '@/features/eventos/severidad';
 import { radius, spacing, useEstilos, useTema, type Tema } from '@/theme';
+
+import { cuandoConDia, duracion, haceCuanto, hora, primerNombre } from './formato';
+import { presentar } from './presentacion';
+import { coloresSeveridad, ETIQUETA_SEVERIDAD, requiereAtencion, severidadDe } from './severidad';
 
 interface Props {
   evento: Evento | null;
@@ -19,14 +20,9 @@ interface Props {
   onResolver: (evento: Evento) => Promise<void>;
 }
 
-const ETIQUETA: Record<Severidad, string> = {
-  urgente: 'Alerta urgente',
-  moderada: 'Alerta moderada',
-  rutina: 'Rutina',
-};
-
 /**
  * Mockup 03 · Detalle de alerta: hoja inferior que oscurece pero no reemplaza el feed.
+ * Se abre desde Notificaciones y desde Reportes.
  * Jerarquía de botones deliberada: "Llamar" primario rojo, "Marcar como resuelta" secundario.
  */
 export function DetalleAlertaSheet({ evento, eventos, hogar, onCerrar, onResolver }: Props) {
@@ -82,7 +78,7 @@ export function DetalleAlertaSheet({ evento, eventos, hogar, onCerrar, onResolve
 
         <View style={[styles.etiqueta, { backgroundColor: suave }]}>
           <Feather name="alert-triangle" size={14} color={texto} />
-          <Text style={[styles.etiquetaTexto, { color: texto }]}>{ETIQUETA[severidad]}</Text>
+          <Text style={[styles.etiquetaTexto, { color: texto }]}>{ETIQUETA_SEVERIDAD[severidad]}</Text>
         </View>
 
         <Text style={typography.titulo}>{titulo}</Text>

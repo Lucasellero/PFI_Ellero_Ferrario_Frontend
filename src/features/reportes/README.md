@@ -15,7 +15,8 @@ Pestaña Reportes. Cubre **RF9** (reportes periódicos del estado y la rutina) a
   residente** (no un umbral genérico), como pide el informe.
 - **Eventos del período**: alertas y desvíos (no actividades de rutina) desde el inicio del
   período, con la misma `EventoCard` del home. Si no hay, una tarjeta verde "Sin alertas ni
-  desvíos en el período".
+  desvíos en el período". Tocar una tarjeta abre el mismo detalle que en Notificaciones
+  (`features/eventos/DetalleAlertaSheet.tsx`), desde donde también se puede marcar como resuelta.
 
 ## Estado
 

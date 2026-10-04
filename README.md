@@ -27,6 +27,7 @@ del residente.
 | Notificaciones push (Firebase Cloud Messaging) | ⏳ Pendiente — requiere *development build* (no anda en Expo Go) |
 | Conexión al backend real | ⏳ Parcial — solo existe `GET /hogares/{id}/eventos`; el resto de endpoints falta en el backend (ver [`src/api/README.md`](src/api/README.md)) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
+| Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
 
 ---
 
@@ -113,8 +114,8 @@ src/
 ├── features/             Una carpeta por funcionalidad, cada una con su README
 │   ├── auth/             Sesión y pantalla de Login
 │   ├── hogar/            Estado compartido: perfil, residente, eventos
-│   ├── eventos/          Lógica común de eventos: severidad, textos, formato, tarjeta
-│   ├── notificaciones/   Home: estado del día, filtros, feed, detalle de alerta
+│   ├── eventos/          Lógica común de eventos: severidad, textos, formato, tarjeta, detalle
+│   ├── notificaciones/   Home: estado del día, filtros, feed
 │   ├── reportes/         Rutina vs. lo habitual + eventos del período
 │   └── perfil/           Datos de la cuenta, cerrar sesión
 ├── components/           Componentes visuales genéricos (Botón, Chip, Encabezado...)
@@ -212,6 +213,51 @@ sí. Ninguna pantalla llama a `fetch` directo: todo pasa por `src/api`.
 - **"Rutina de sueño alterada"** aparece en el mockup de Reportes, pero no se muestra porque
   `baseline/` no tiene hoy una clase que detecte el sueño; los desvíos se muestran con los tipos
   que sí emite el backend.
+
+### 2026-10-04 — Modo claro y oscuro
+
+**Qué se hizo**
+- Tema con **dos paletas de mismas claves** (`paletaClara` / `paletaOscura` en
+  [`src/theme/paletas.ts`](src/theme/paletas.ts)) y un `TemaProvider` que expone el tema activo
+  (`useTema()`, `useEstilos()`). Todas las pantallas piden colores al tema; ninguna los define
+  sueltos.
+- **Selector de apariencia en Perfil:** Sistema / Claro / Oscuro. La preferencia se guarda en
+  AsyncStorage y se aplica con `Appearance.setColorScheme`, así alertas y teclado nativos quedan
+  en el mismo modo.
+- **Splash oscuro** (`splash-icon-dark.png`, fondo `#111815`) y `userInterfaceStyle: automatic`
+  en `app.json`.
+
+**Decisiones**
+- **No es invertir la clara:** fondo verde casi negro (no negro puro) para que siga siendo
+  Lares; verde de marca en dos roles (`primario` como relleno, `acento` como texto) porque en
+  oscuro el texto necesita un verde más claro; semáforo con los colores oficiales y `XSuave` /
+  `XTexto` ajustados.
+- **El logo va siempre sobre crema:** la persona verde oscura del símbolo no se ve sobre fondo
+  oscuro.
+- Detalle y criterios en [`src/theme/README.md`](src/theme/README.md).
+
+### 2026-10-04 — Accesibilidad de alertas, detalle desde Reportes y actualización automática
+
+**Qué se hizo**
+- **Lectores de pantalla:** la tarjeta de evento ahora dice en palabras la severidad y si está
+  sin atender o atendida ("Alerta urgente. Sin atender. Posible caída detectada…"). Antes eso
+  solo se veía por color, y una persona que usa VoiceOver o TalkBack no se enteraba de que era
+  urgente.
+- **Detalle desde Reportes:** las tarjetas de "Eventos del período" se pueden tocar y abren el
+  mismo detalle que en Notificaciones. `DetalleAlertaSheet` se movió de `notificaciones/` a
+  `eventos/` (compartida) para respetar la regla de que las features no se importan entre sí.
+- **Actualización automática:** la lista de eventos se pide sola cada 30 s con la app abierta
+  y apenas vuelve a primer plano (`HogarProvider`). Así una caída aparece sin tener que tirar
+  para actualizar, y los "hace N minutos" se mantienen al día.
+- Verificado: `typecheck` y `lint`.
+
+**Decisiones**
+- **Consultar cada 30 s es provisorio**, hasta que estén las push (RF8). En segundo plano no
+  consulta. 30 s es un equilibrio entre enterarse rápido y no gastar batería ni datos.
+- **Actualización silenciosa:** sin spinner y, si falla, queda la lista anterior; el error solo
+  se muestra cuando lo pide el usuario (tirar para actualizar).
+- **Una alerta resuelta no vuelve a aparecer** por una respuesta vieja que llega tarde
+  (`fusionarEventos`).
 
 ---
 

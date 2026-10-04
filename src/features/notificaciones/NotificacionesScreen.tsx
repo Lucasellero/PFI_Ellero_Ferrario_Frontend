@@ -7,6 +7,7 @@ import type { Evento } from '@/api/types';
 import { Chip } from '@/components/Chip';
 import { EncabezadoPantalla } from '@/components/EncabezadoPantalla';
 import { EstadoCarga } from '@/components/EstadoCarga';
+import { DetalleAlertaSheet } from '@/features/eventos/DetalleAlertaSheet';
 import { EventoCard } from '@/features/eventos/EventoCard';
 import { fechaLarga, mismoDia, primerNombre } from '@/features/eventos/formato';
 import { esVisibleEnFeed } from '@/features/eventos/presentacion';
@@ -14,7 +15,6 @@ import { coloresSeveridad, requiereAtencion, severidadDe, type Severidad } from 
 import { useHogar } from '@/features/hogar/HogarProvider';
 import { spacing, useEstilos, useTema, type Tema } from '@/theme';
 
-import { DetalleAlertaSheet } from './DetalleAlertaSheet';
 import { EstadoDelDia } from './EstadoDelDia';
 
 type Filtro = 'todas' | Severidad;

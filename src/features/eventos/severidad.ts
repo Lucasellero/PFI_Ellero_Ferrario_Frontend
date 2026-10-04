@@ -24,6 +24,16 @@ export function severidadDe(evento: Evento): Severidad {
   }
 }
 
+/**
+ * Nombre de la severidad en palabras: etiqueta del detalle y texto para lectores de pantalla
+ * (el color solo no alcanza para quien no lo ve).
+ */
+export const ETIQUETA_SEVERIDAD: Record<Severidad, string> = {
+  urgente: 'Alerta urgente',
+  moderada: 'Alerta moderada',
+  rutina: 'Rutina',
+};
+
 /** Urgentes y moderadas quedan fijadas arriba del feed hasta ser atendidas. */
 export function requiereAtencion(evento: Evento): boolean {
   return severidadDe(evento) !== 'rutina' && !evento.resuelta;

@@ -1,14 +1,16 @@
 # `features/notificaciones/` — Home de la app
 
-Pestaña principal. Cubre **RF8** (ver las alertas; la push en sí está pendiente), **RF1/RF3/RF4/RF7**
-(cómo se muestra cada tipo de evento) y **RF13** parcial (historial reciente). Mockups **02 ·
-Notificaciones**, **03 · Detalle de alerta** y **05 · Día en orden**.
+Pestaña principal. Cubre **RF8** (ver las alertas; la push en sí está pendiente),
+**RF1/RF3/RF4/RF7** (cómo se muestra cada tipo de evento) y **RF13** parcial (historial
+reciente). Mockups **02 · Notificaciones**, **03 · Detalle de alerta** y **05 · Día en orden**.
+
+El detalle de alerta (mockup 03) vive en `features/eventos/DetalleAlertaSheet.tsx` porque
+también lo abre Reportes; las decisiones de abajo sobre el detalle siguen valiendo.
 
 | Archivo | Qué es |
 |---|---|
 | `NotificacionesScreen.tsx` | Pantalla: encabezado, estado del día, filtros, secciones del feed. |
 | `EstadoDelDia.tsx` | Tarjeta de arriba: roja "N alertas requieren tu atención" o verde "Todo en orden hoy". |
-| `DetalleAlertaSheet.tsx` | Hoja inferior al tocar una tarjeta: datos, "Llamar a…", "Marcar como resuelta". |
 
 ## Cómo se arma el feed
 
@@ -19,7 +21,8 @@ Notificaciones**, **03 · Detalle de alerta** y **05 · Día en orden**.
 4. **Días anteriores**: los últimos 15; el historial completo es para Reportes.
 
 Los chips (Todas / Urgentes / Moderadas / Rutina) filtran las tres secciones. Tirar hacia abajo
-recarga.
+recarga; además la lista se actualiza sola cada 30 s y al volver a la app (ver
+`features/hogar/README.md`).
 
 ## Decisiones (de los mockups, cap. 3 del informe)
 
