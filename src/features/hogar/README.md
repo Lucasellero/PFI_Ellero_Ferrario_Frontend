@@ -5,7 +5,8 @@ el residente) y los **eventos** de ese hogar, y los comparte con todas las pesta
 `useHogar()`.
 
 ```ts
-const { perfil, hogar, eventos, cargando, refrescando, error, recargar, marcarResuelta } = useHogar();
+const { perfil, hogar, eventos, cargando, error, recargar, marcarResuelta } = useHogar();
+const { refrescando, onRefrescar } = useRecargaManual(); // "tirar para actualizar" de una pantalla
 ```
 
 ## Por qué existe
@@ -32,6 +33,11 @@ const { perfil, hogar, eventos, cargando, refrescando, error, recargar, marcarRe
 - **Las alertas resueltas no se "desresuelven":** si una consulta salió antes de marcar una
   alerta y vuelve después, `fusionarEventos` conserva el `resuelta: true` local para que la
   alerta no reaparezca fijada unos segundos.
+- **El spinner de "tirar para actualizar" es de cada pantalla** (`useRecargaManual`), no del
+  contexto. Las pestañas quedan montadas aunque no se vean: con un `refreshing` compartido,
+  tirar en Reportes prendía también el spinner de Notificaciones, y en iOS quedaba trabado
+  arriba de la pantalla. Además el spinner dura al menos 600 ms, porque si la respuesta llega
+  antes de que termine la animación de entrada, iOS también lo puede dejar colgado.
 
 ## Pendiente
 

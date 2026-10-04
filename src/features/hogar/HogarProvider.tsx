@@ -31,8 +31,6 @@ interface HogarContextValue {
   hogar: HogarResumen | null;
   eventos: Evento[];
   cargando: boolean;
-  /** true mientras corre un "tirar para actualizar" (la lista sigue visible). */
-  refrescando: boolean;
   error: string | null;
   recargar(): Promise<void>;
   marcarResuelta(eventoId: number): Promise<void>;
@@ -57,7 +55,6 @@ export function HogarProvider({ children }: { children: ReactNode }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const hogar = perfil?.hogares[0] ?? null;
@@ -125,19 +122,15 @@ export function HogarProvider({ children }: { children: ReactNode }) {
     hogar,
     eventos,
     cargando,
-    refrescando,
     error,
     async recargar() {
       if (!hogar) return cargarTodo();
-      setRefrescando(true);
       try {
         const nuevos = await api.listarEventos(hogar.id);
         setEventos((previos) => fusionarEventos(previos, nuevos));
         setError(null);
       } catch (e) {
         setError(mensajeDeError(e));
-      } finally {
-        setRefrescando(false);
       }
     },
     async marcarResuelta(eventoId) {
@@ -162,4 +155,30 @@ export function useHogar(): HogarContextValue {
   const ctx = use(HogarContext);
   if (!ctx) throw new Error('useHogar tiene que usarse dentro de <HogarProvider>');
   return ctx;
+}
+
+/** Tiempo mínimo que se ve el spinner, aunque la respuesta llegue antes. */
+const DURACION_MINIMA_SPINNER_MS = 600;
+
+/**
+ * "Tirar para actualizar" de UNA pantalla: cada pantalla con `RefreshControl` usa su propio
+ * hook, así el spinner solo aparece en la lista que el familiar tiró.
+ *
+ * Por qué no vive en el contexto: las pestañas quedan montadas aunque no se vean, y si el
+ * `refreshing` fuera compartido, tirar en Reportes activaría también el spinner de
+ * Notificaciones (oculta). En iOS ese spinner arrancado por código en una lista que no se ve
+ * quedaba trabado arriba de la pantalla. Lo mismo si la respuesta vuelve antes de que termine
+ * la animación de entrada: por eso la duración mínima.
+ */
+export function useRecargaManual() {
+  const { recargar } = useHogar();
+  const [refrescando, setRefrescando] = useState(false);
+
+  async function onRefrescar() {
+    setRefrescando(true);
+    await Promise.all([recargar(), new Promise((r) => setTimeout(r, DURACION_MINIMA_SPINNER_MS))]);
+    setRefrescando(false);
+  }
+
+  return { refrescando, onRefrescar };
 }

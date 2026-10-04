@@ -259,6 +259,20 @@ sí. Ninguna pantalla llama a `fetch` directo: todo pasa por `src/api`.
 - **Una alerta resuelta no vuelve a aparecer** por una respuesta vieja que llega tarde
   (`fusionarEventos`).
 
+### 2026-10-04 — Arreglo: spinner trabado arriba del home en iOS
+
+**Qué pasaba:** probando en un iPhone, el spinner de "tirar para actualizar" quedaba fijo
+arriba de Notificaciones aunque no se estuviera cargando nada.
+
+**Causa:** el estado `refrescando` vivía en `HogarProvider` y lo compartían las dos pestañas.
+Tirar para actualizar en una pestaña prendía por código el spinner de la otra (montada pero
+oculta), y iOS no lo limpia bien en una lista que no se ve.
+
+**Arreglo:** cada pantalla tiene su propio spinner (`useRecargaManual` en
+[`src/features/hogar/HogarProvider.tsx`](src/features/hogar/HogarProvider.tsx)), con una
+duración mínima de 600 ms para que la respuesta no llegue en medio de la animación de entrada.
+Verificado `typecheck`, `lint` y probado en un iPhone con Expo Go: el spinner ya no queda trabado.
+
 ---
 
 ## Próximos pasos

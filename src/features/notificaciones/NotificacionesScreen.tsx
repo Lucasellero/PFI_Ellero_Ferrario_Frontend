@@ -12,7 +12,7 @@ import { EventoCard } from '@/features/eventos/EventoCard';
 import { fechaLarga, mismoDia, primerNombre } from '@/features/eventos/formato';
 import { esVisibleEnFeed } from '@/features/eventos/presentacion';
 import { coloresSeveridad, requiereAtencion, severidadDe, type Severidad } from '@/features/eventos/severidad';
-import { useHogar } from '@/features/hogar/HogarProvider';
+import { useHogar, useRecargaManual } from '@/features/hogar/HogarProvider';
 import { spacing, useEstilos, useTema, type Tema } from '@/theme';
 
 import { EstadoDelDia } from './EstadoDelDia';
@@ -31,7 +31,8 @@ const MAX_ANTERIORES = 15;
 
 /** Mockups 02 (con alertas) y 05 (día en orden) · Home de la app. */
 export function NotificacionesScreen() {
-  const { perfil, hogar, eventos, cargando, refrescando, error, recargar, marcarResuelta } = useHogar();
+  const { perfil, hogar, eventos, cargando, error, recargar, marcarResuelta } = useHogar();
+  const { refrescando, onRefrescar } = useRecargaManual();
   const [filtro, setFiltro] = useState<Filtro>('todas');
   const [seleccionado, setSeleccionado] = useState<Evento | null>(null);
   const { colors } = useTema();
@@ -62,7 +63,7 @@ export function NotificacionesScreen() {
       <ScrollView
         contentContainerStyle={styles.contenido}
         refreshControl={
-          <RefreshControl refreshing={refrescando} onRefresh={recargar} tintColor={colors.acento} />
+          <RefreshControl refreshing={refrescando} onRefresh={onRefrescar} tintColor={colors.acento} />
         }>
         <EncabezadoPantalla
           sobretitulo={fechaLarga(ahora)}

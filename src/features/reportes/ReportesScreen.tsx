@@ -13,7 +13,7 @@ import { EventoCard } from '@/features/eventos/EventoCard';
 import { primerNombre } from '@/features/eventos/formato';
 import { esVisibleEnFeed } from '@/features/eventos/presentacion';
 import { severidadDe } from '@/features/eventos/severidad';
-import { useHogar } from '@/features/hogar/HogarProvider';
+import { useHogar, useRecargaManual } from '@/features/hogar/HogarProvider';
 import { radius, spacing, useEstilos, useTema, type Tema } from '@/theme';
 
 const PERIODOS: { valor: Periodo; label: string; titulo: string; eventos: string }[] = [
@@ -36,7 +36,8 @@ function desde(periodo: Periodo): Date {
  * de SU propia rutina (la línea base de `baseline/`, RF6) + los eventos relevantes del período.
  */
 export function ReportesScreen() {
-  const { hogar, eventos, cargando, refrescando, error, recargar, marcarResuelta } = useHogar();
+  const { hogar, eventos, cargando, error, recargar, marcarResuelta } = useHogar();
+  const { refrescando, onRefrescar } = useRecargaManual();
   const [periodo, setPeriodo] = useState<Periodo>('semana');
   const [seleccionado, setSeleccionado] = useState<Evento | null>(null);
   const { colors, typography } = useTema();
@@ -78,7 +79,7 @@ export function ReportesScreen() {
       <ScrollView
         contentContainerStyle={styles.contenido}
         refreshControl={
-          <RefreshControl refreshing={refrescando} onRefresh={recargar} tintColor={colors.acento} />
+          <RefreshControl refreshing={refrescando} onRefresh={onRefrescar} tintColor={colors.acento} />
         }>
         <EncabezadoPantalla sobretitulo={hogar.residente.nombre} titulo="Reportes" residente={hogar.residente.nombre} />
 
