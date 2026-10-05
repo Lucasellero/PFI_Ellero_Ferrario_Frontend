@@ -6,6 +6,10 @@ qué tiene que hacer el backend y **qué cambia en el diagrama de base de datos 
 
 > Estado (2026-10-04): la app tiene todo el flujo hecho y funcionando contra el **mock**. El
 > backend todavía no tiene ninguno de los endpoints de este documento (`PENDIENTE BACKEND`).
+>
+> Actualizado (2026-10-05) con las decisiones tomadas al pasarlo al informe: push en FAMILIAR,
+> sin INVITACION, `direccion` opcional, sin verificación de mail (proveedores permitidos), wifi
+> validado para 3 cámaras, RF10 redefinido y RF14 nuevo.
 
 ---
 
@@ -23,7 +27,7 @@ sequenceDiagram
     Note over Lar: El familiar la enchufa al router con el cable de red
     Lar->>API: Al encenderse: informa sus cámaras y avisa que está viva (X-API-Key)
     F->>App: Crear cuenta (nombre, mail, contraseña)
-    App->>FB: createUserWithEmailAndPassword + mail de verificación
+    App->>FB: createUserWithEmailAndPassword (solo proveedores conocidos)
     App->>API: POST /me {nombre}  → crea FAMILIAR
     F->>App: Escanea el QR de la controladora
     App->>API: POST /kits/vincular {codigo}
@@ -38,7 +42,10 @@ sequenceDiagram
 
 | # | Pantalla | Qué pasa |
 |---|---|---|
-| — | Login → **Crear cuenta** | Nombre, mail, contraseña y confirmación, con validación en vivo. |
+| — | Login → **Crear cuenta** | Nombre, mail, contraseña y confirmación, con validación en vivo. Sin mail de verificación: solo se aceptan correos de Gmail, Hotmail, Outlook, Yahoo o iCloud (`DOMINIOS_PERMITIDOS` en `src/lib/validaciones.ts`). |
+
+**Requerimientos (informe):** RF10 = el familiar asigna desde la app la ubicación de cada cámara
+del kit (paso 3). RF14 (nuevo) = vinculación del kit por QR (pasos 1 a 3).
 | 1 | **Vinculá tu kit** | Instrucciones + "Escanear el código QR" o "Ingresar el código a mano". |
 | 1 | Escáner | Cámara del celular (`expo-camera`). Si el QR no es de Lares, o el kit ya está vinculado, explica qué hacer. |
 | 2 | **¿A quién vas a cuidar?** | Nombre del residente (obligatorio) y teléfono (opcional, lo usa "Llamar a…"). |
@@ -69,7 +76,7 @@ controladora ni en las cámaras.
 | ¿Cómo se conecta a internet? | **Con un cable de red** de la controladora al router de la casa. Sin contraseñas ni configuración. El cable **no viene en el kit**: lo pone el familiar (la mayoría de los routers traen uno). |
 | ¿Cómo se conectan las cámaras? | A una **red wifi privada que arma la propia controladora**. Las cámaras (Vela) vienen configuradas de fábrica para conectarse solo a esa red. |
 | ¿Cómo se "levanta" el sistema? | Solo. El runner y el panel local arrancan al encender la controladora (servicios de `systemd`) y vuelven a arrancar después de un corte de luz. |
-| ¿Y el panel de control local? | Es una herramienta técnica (equipo, soporte). Se abre desde un navegador en la red de la casa, en una dirección fija tipo `http://lar.local` (mDNS). El familiar hace todo desde la app. |
+| ¿Y el panel de control local? | **Opcional.** La familia puede abrirlo desde un navegador en la red de la casa, en una dirección fija tipo `http://lar.local` (mDNS), pero no hace falta: todo lo necesario se hace desde la app. También lo usa el soporte técnico, **solo de forma presencial** (no hay acceso remoto). |
 | ¿Cómo sabe el familiar si funciona? | Por la **luz de estado** de la controladora y por la app. |
 
 ### Por qué una red privada para las cámaras
@@ -80,9 +87,8 @@ domésticas que describe la Sección 3.8 del informe. Es una garantía de privac
 fuerte que "no lo configuramos para que lo mande".
 
 Como la controladora sale a internet por cable, su wifi queda libre para la red de las cámaras.
-**A validar con el hardware:** que el wifi de la Raspberry Pi 5 sostenga como punto de acceso a
-3 cámaras transmitiendo en simultáneo. Si no alcanza, un adaptador wifi USB dedicado a las
-cámaras (costo a sumar al presupuesto de la Tabla 3.III).
+**Probado con el hardware:** el wifi de la Raspberry Pi 5 sostiene como punto de acceso las 3
+cámaras transmitiendo en simultáneo, así que no hace falta un adaptador USB.
 
 ### Luz de estado
 
@@ -139,13 +145,12 @@ Implementación en la app: `src/features/vinculacion/codigoKit.ts`.
 | Entidad | Cambio | Prioridad |
 |---|---|---|
 | **KIT** | **Nueva** (incluye `ultima_conexion_at` para saber si Lar está en línea) | Imprescindible para el QR |
-| HOGAR | Pasa `device_api_key_hash` a KIT; `nombre` y `fecha_alta` | Imprescindible para el QR |
+| HOGAR | Pasa `device_api_key_hash` a KIT; `nombre`, `fecha_alta` y `direccion` (opcional) | Imprescindible para el QR |
 | RESIDENTE | + `telefono` | Imprescindible (lo usa la app hoy) |
 | EVENTO | + `resuelta_at`, `resuelta_por`; `camara_id` pasa a opcional | Imprescindible (lo usa la app hoy) |
 | CAMARA | + `kit_id`; `hogar_id` opcional hasta vincular; la cantidad la fija el plan del kit | Imprescindible para el QR |
-| **DISPOSITIVO_FAMILIAR** | **Nueva** (tokens de push) | Necesaria para RF8 |
-| **INVITACION** | **Nueva** | Opcional (RF12) |
-| FAMILIAR, HOGAR_FAMILIAR | Sin cambios de estructura; se definen los valores de `rol` | — |
+| FAMILIAR | + `push_token` (null), para las notificaciones push | Necesaria para RF8 |
+| HOGAR_FAMILIAR | Sin cambios de estructura; se definen los valores de `rol` | — |
 | LINEA_BASE_COMPORTAMIENTO | Sin cambios; falta decidir si se usa | A definir |
 
 ### Entidades, campo por campo
@@ -183,7 +188,7 @@ antes que el hogar (en fábrica), y HOGAR no tendría con qué completarse.
 | id | int | **PK** |
 | nombre | string | "Casa de Rosa". La app lo arma con el nombre del residente |
 | fecha_alta | timestamp | Momento de la vinculación |
-| ~~direccion~~ | | **Se propone quitarla**: la app no la usa y es un dato sensible más |
+| direccion | string | **null**. Se mantiene opcional; la app hoy no la pide |
 | ~~device_api_key_hash~~ | | **Pasa a KIT** (hoy está en `cloud/app/models.py`) |
 
 #### RESIDENTE (modificada)
@@ -214,8 +219,8 @@ En el código del backend `identificador_local` se llama `local_id`; conviene un
 **Regla:** un kit nunca tiene más cámaras que su `cantidad_camaras`. El backend la hace
 cumplir en dos lugares: al crear las cámaras en fábrica, y si la controladora intenta registrar
 una cámara de más (`POST /camaras` → 409 "el plan de este kit es de N cámaras"). Para pasar a un
-plan más grande, se actualiza `cantidad_camaras` (venta de cámara adicional) y se crea la cámara
-nueva.
+plan más grande, se actualiza `cantidad_camaras` (venta de cámara adicional, USD 19 con IVA;
+USD 15 es el costo) y se crea la cámara nueva.
 
 #### EVENTO (modificada)
 
@@ -232,10 +237,18 @@ nueva.
 | resuelta_at | timestamp | **null**. Nuevo: cuándo se marcó como atendida ("Marcar como resuelta") |
 | resuelta_por | int | **FK → FAMILIAR**, **null**. Nuevo: quién la atendió |
 
-#### FAMILIAR (sin cambios)
+#### FAMILIAR (modificada)
 
-`id` PK, `nombre`, `email`, `firebase_uid` UQ. Se crea con `POST /me` justo después de crear la
-cuenta en Firebase.
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | int | **PK** |
+| nombre | string | |
+| email | string | De un proveedor permitido (Gmail, Hotmail, Outlook, Yahoo, iCloud); no se verifica por mail |
+| firebase_uid | string | **UQ** |
+| push_token | string | **null**. Nuevo: token de FCM del celular para las push (RF8). Se pisa al iniciar sesión o cuando FCM lo renueva |
+
+Se crea con `POST /me` justo después de crear la cuenta en Firebase. Un solo token por familiar:
+si inicia sesión en otro celular, las push pasan a llegar a ese (como propone `cloud/README.md`).
 
 #### HOGAR_FAMILIAR (sin cambios de estructura)
 
@@ -243,33 +256,9 @@ cuenta en Firebase.
 - `responsable_principal`: quien vinculó el kit. Puede invitar y quitar familiares.
 - `familiar`: solo ve alertas y reportes.
 
-#### DISPOSITIVO_FAMILIAR (nueva — para las notificaciones push)
-
-| Campo | Tipo | Notas |
-|---|---|---|
-| id | int | **PK** |
-| familiar_id | int | **FK → FAMILIAR** |
-| push_token | string | **UQ**. Token de FCM del celular |
-| plataforma | string | "android" / "ios" |
-| actualizado_at | timestamp | El token cambia cada tanto; se pisa al loguearse |
-
-Tabla aparte (y no una columna `push_token` en FAMILIAR, como propone hoy `cloud/README.md`)
-porque un familiar puede tener más de un celular.
-
-#### INVITACION (nueva, opcional)
-
-| Campo | Tipo | Notas |
-|---|---|---|
-| id | int | **PK** |
-| hogar_id | int | **FK → HOGAR** |
-| email | string | A quién se invita |
-| rol | string | Rol que va a tener |
-| creada_por | int | **FK → FAMILIAR** |
-| estado | string | "pendiente" / "aceptada" / "vencida" |
-| expira_at | timestamp | |
-
-Sin esta tabla solo se puede invitar a alguien que ya se creó la cuenta (lo que propone hoy
-`cloud/README.md`). Para el prototipo pueden arrancar sin ella.
+**Invitaciones:** no hay tabla de invitaciones. Solo se invita a familiares que **ya tienen
+cuenta**: el responsable principal ingresa el mail y el backend crea directamente la fila de
+HOGAR_FAMILIAR (como propone `cloud/README.md`, punto 4).
 
 #### LINEA_BASE_COMPORTAMIENTO (sin cambios)
 
@@ -286,8 +275,6 @@ necesita esos rangos de algún lado.
 | HOGAR — CAMARA | 0..1 : 0..N | Cambia: la cámara recibe el hogar recién al vincular |
 | FAMILIAR — KIT (`vinculado_por`) | 1 : 0..N | Quién vinculó cada kit |
 | FAMILIAR — EVENTO (`resuelta_por`) | 1 : 0..N | Quién atendió cada alerta |
-| FAMILIAR — DISPOSITIVO_FAMILIAR | 1 : 0..N | Celulares de cada familiar |
-| HOGAR — INVITACION | 1 : 0..N | Invitaciones del hogar (opcional) |
 | CAMARA — EVENTO | 0..1 : 0..N | Ahora opcional del lado del evento |
 
 Las demás quedan igual: HOGAR 1:1 RESIDENTE, FAMILIAR N:M HOGAR (vía
@@ -302,9 +289,7 @@ erDiagram
     KIT ||--|{ CAMARA : "incluye (plan)"
     HOGAR |o--o{ CAMARA : "ubica"
     HOGAR ||--o{ HOGAR_FAMILIAR : vincula
-    HOGAR ||--o{ INVITACION : "invita (opcional)"
     FAMILIAR ||--o{ HOGAR_FAMILIAR : pertenece
-    FAMILIAR ||--o{ DISPOSITIVO_FAMILIAR : usa
     FAMILIAR |o--o{ KIT : "vinculó"
     FAMILIAR |o--o{ EVENTO : "resolvió"
     CAMARA |o--o{ EVENTO : origina
@@ -315,6 +300,7 @@ erDiagram
         int id PK
         string nombre
         timestamp fecha_alta
+        string direccion "null"
     }
     KIT {
         int id PK
@@ -359,27 +345,12 @@ erDiagram
         string nombre
         string email
         string firebase_uid UK
+        string push_token "null"
     }
     HOGAR_FAMILIAR {
         int hogar_id PK
         int familiar_id PK
         string rol
-    }
-    DISPOSITIVO_FAMILIAR {
-        int id PK
-        int familiar_id FK
-        string push_token UK
-        string plataforma
-        timestamp actualizado_at
-    }
-    INVITACION {
-        int id PK
-        int hogar_id FK
-        string email
-        string rol
-        int creada_por FK
-        string estado
-        timestamp expira_at
     }
     LINEA_BASE_COMPORTAMIENTO {
         int id PK
@@ -395,7 +366,9 @@ la figura en Lucidchart.
 ### Texto del informe a revisar
 
 Si se actualiza la Figura 3.8, también cambian estas partes del cap. 3, Sección 3.5.2:
-- La descripción de HOGAR (sin `direccion`) y la entidad nueva KIT, con el motivo de separarla.
+- La descripción de HOGAR (`direccion` opcional) y la entidad nueva KIT, con el motivo de
+  separarla.
+- FAMILIAR: `push_token`.
 - EVENTO: `camara_id` opcional y los campos de resolución.
 - Sección 3.8 (Viabilidad Técnica) ya dice que la ubicación de cada cámara se asigna desde la
   app: ahora está implementado así.
@@ -479,7 +452,8 @@ quien lo configuró que te invite desde su app.").
 
 ## 6. Cómo probarlo hoy (modo mock)
 
-- **Crear cuenta** desde el Login con cualquier mail (no `ana.gomez@mail.com`, que es la demo).
+- **Crear cuenta** desde el Login con un mail de Gmail, Hotmail, Outlook, Yahoo o iCloud (no
+  `ana.gomez@mail.com`, que es la demo). Con otro dominio, la app muestra el error.
 - Códigos de prueba (`src/api/mock.ts` → `KITS_DEMO`):
 
 | Serie | Código | Para probar |
@@ -493,12 +467,18 @@ quien lo configuró que te invite desde su app.").
   (cualquier generador de QR online sirve) y apuntarle con el celular.
 - Las cuentas y vinculaciones del mock se pierden al recargar la app.
 
-## 7. Decisiones abiertas
+## 7. Decisiones
 
-- **Invitaciones (RF12):** con tabla INVITACION (invitación pendiente) o solo a cuentas ya
-  creadas.
-- **`direccion` en HOGAR:** quitarla (propuesta) o mantenerla opcional.
-- **Verificación de mail:** el informe la exige. Con Firebase hay que decidir si se bloquea la
-  vinculación hasta verificar el mail o solo se avisa.
+**Cerradas (2026-10-05, al pasar esto al informe):**
+- **Invitaciones (RF12):** sin tabla INVITACION; solo se invita a familiares que ya tienen
+  cuenta.
+- **`direccion` en HOGAR:** se mantiene, opcional.
+- **Verificación de mail:** se elimina. No se manda mail de verificación; al crear la cuenta solo
+  se aceptan proveedores conocidos (`validarEmailRegistro` en `src/lib/validaciones.ts`).
+- **Push:** `push_token` en FAMILIAR (un celular por familiar), sin tabla aparte.
+- **Wifi de la controladora:** probado con 3 cámaras, sin adaptador USB.
+- **Panel local:** opcional para la familia; soporte técnico solo presencial.
+
+**Abiertas:**
 - **Varios hogares por familiar:** el modelo lo permite (N:M), pero la app hoy usa el primero.
   Vincular un segundo kit desde Perfil queda para más adelante.

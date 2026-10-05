@@ -28,13 +28,16 @@ el error aparece debajo del campo (`CampoTexto`) y se anuncia al lector de panta
 | Login | Correo | Formato de mail |
 | Login | Contraseña | Que no esté vacía (las reglas de contraseña fuerte son solo para crearla) |
 | Crear cuenta | Nombre | 2 a 60 letras |
-| Crear cuenta | Correo | Formato de mail |
+| Crear cuenta | Correo | Formato de mail **y proveedor conocido** (Gmail, Hotmail, Outlook, Live, Yahoo, iCloud; `DOMINIOS_PERMITIDOS`) |
 | Crear cuenta | Contraseña | 8+ caracteres, una letra y un número (lista en vivo) |
 | Crear cuenta | Repetir contraseña | Igual a la anterior |
 
 `AuthProvider` revalida antes de crear la cuenta: es la última barrera del lado de la app
 (Firebase y el backend validan de nuevo).
 
+- **Sin verificación de mail** (decisión del informe): en su lugar, al crear la cuenta solo se
+  aceptan proveedores conocidos (`validarEmailRegistro`). El login y "Olvidé mi contraseña"
+  siguen con `validarEmail` (cualquier dominio). `mail.com` está permitido por la cuenta demo.
 - **Login fallido:** el mismo mensaje para "no existe" y "contraseña incorrecta" ("El correo o
   la contraseña no son correctos"), como hace Firebase: no revela qué mails tienen cuenta.
 
@@ -42,7 +45,7 @@ el error aparece debajo del campo (`CampoTexto`) y se anuncia al lector de panta
 
 - Cuenta demo **`ana.gomez@mail.com`** con cualquier contraseña de 6+ caracteres: entra directo
   a las pestañas con datos de prueba.
-- **Crear cuenta** con cualquier otro mail: la cuenta vive en memoria (se pierde al recargar la
+- **Crear cuenta** con otro mail de un proveedor permitido: la cuenta vive en memoria (se pierde al recargar la
   app) y entra a la vinculación del kit.
 - No persiste la sesión (al recargar la app hay que volver a entrar).
 - "Olvidé mi contraseña" muestra el aviso pero no manda nada.
@@ -56,8 +59,8 @@ Prerequisito: proyecto de Firebase creado con "Email/Password" habilitado (runbo
    está instalado), con `initializeAuth` + `getReactNativePersistence(AsyncStorage)` para que la
    sesión sobreviva al reinicio. Reemplazar el cuerpo de `AuthProvider`:
    - `iniciarSesion` → `signInWithEmailAndPassword`.
-   - `registrarCuenta` → `createUserWithEmailAndPassword` + `updateProfile({ displayName })` +
-     `sendEmailVerification`, y después `api.crearPerfil({ nombre })` (`POST /me`) **antes** de
+   - `registrarCuenta` → `createUserWithEmailAndPassword` + `updateProfile({ displayName })`
+     (sin `sendEmailVerification`), y después `api.crearPerfil({ nombre })` (`POST /me`) **antes** de
      dar la sesión por iniciada (así `GET /me` ya encuentra al familiar).
    - `cerrarSesion` → `signOut`.
    - `recuperarContrasena` → `sendPasswordResetEmail`.
@@ -70,10 +73,9 @@ Prerequisito: proyecto de Firebase creado con "Email/Password" habilitado (runbo
    `@react-native-firebase/auth` + `messaging`, un solo SDK nativo para login y push, que es lo
    que describe literalmente el informe (cap. 4). Gracias a `useAuth()` las pantallas no cambian.
 
-## Decisiones abiertas
+## Decisiones tomadas
 
-- **Verificación de email.** El informe dice que el acceso queda condicionado a confirmar el
-  correo. Con Firebase: decidir si con `user.emailVerified === false` se bloquea la vinculación
-  del kit (pantalla "Revisá tu mail" con "Reenviar") o solo se avisa.
-- **Invitaciones (RF12).** Los familiares que no tienen el kit entran por invitación del
-  responsable principal; ver `docs/vinculacion-kit.md` → "Decisiones abiertas".
+- **Sin verificación de email** (2026-10-05): reemplazada por la lista de proveedores
+  permitidos al crear la cuenta.
+- **Invitaciones (RF12):** solo a familiares que ya tienen cuenta (sin invitaciones pendientes);
+  ver `docs/vinculacion-kit.md` → "Decisiones".

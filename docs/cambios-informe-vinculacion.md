@@ -1,5 +1,15 @@
 # Cambios al informe: vinculación del kit e instalación
 
+> ✅ **APLICADO (2026-10-05).** Estas indicaciones ya se aplicaron en el informe. Durante esa
+> sesión se tomaron decisiones que cambian algunas propuestas de abajo (push en FAMILIAR, sin
+> INVITACION, `direccion` opcional, sin verificación de mail, wifi validado sin adaptador, panel
+> local opcional, RF10 redefinido y RF14 nuevo, cámara adicional a USD 19 con IVA). La versión
+> vigente del diseño es [`vinculacion-kit.md`](vinculacion-kit.md). Este documento queda como
+> registro; **no volver a aplicarlo**.
+>
+> Pendiente del lado del informe: reemplazar la figura `Mockup_Mobile_Flujo3.png` por la nueva
+> versión de `docs/informe/imagenes/` (cambió la ayuda del correo en la pantalla 06).
+
 > **Para Claude Code, trabajando en el repo del informe (`PFI_Ellero_Ferrario`, LaTeX).**
 > Este documento dice qué agregar al informe y en qué sección. Lo armó la sesión que trabaja en
 > la app móvil (repo `PFI_Ellero_Ferrario_Frontend`). Avanzá sección por sección y mostrale a

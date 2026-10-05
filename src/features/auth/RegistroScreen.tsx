@@ -10,7 +10,7 @@ import {
   reglasContrasena,
   validarConfirmacion,
   validarContrasenaNueva,
-  validarEmail,
+  validarEmailRegistro,
   validarNombre,
 } from '@/lib/validaciones';
 import { spacing, useEstilos, useTema, type Tema } from '@/theme';
@@ -47,7 +47,7 @@ export function RegistroScreen() {
 
   const validaciones = {
     nombre: validarNombre(datos.nombre, 'tu nombre'),
-    email: validarEmail(datos.email),
+    email: validarEmailRegistro(datos.email),
     contrasena: validarContrasenaNueva(datos.contrasena),
     confirmacion: validarConfirmacion(datos.contrasena, datos.confirmacion),
   };
@@ -110,7 +110,7 @@ export function RegistroScreen() {
               onChangeText={cambiar('email')}
               onBlur={tocar('email')}
               error={errorDe('email')}
-              ayuda="Te vamos a mandar un mail para confirmarlo."
+              ayuda="Gmail, Hotmail, Outlook, Yahoo o iCloud."
               placeholder="nombre@mail.com"
               keyboardType="email-address"
               autoComplete="email"

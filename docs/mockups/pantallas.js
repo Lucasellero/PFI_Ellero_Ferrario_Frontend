@@ -152,7 +152,7 @@ ${tabs('n')}`,
     html: () => `<div class="form">${nav('Volver')}
 <div class="intro"><h1>Creá tu cuenta</h1><div class="sub">Después vas a escanear el QR de tu kit para vincularlo con esta cuenta.</div></div>
 ${campo('Tu nombre', I.usuario, 'Ana Gómez')}
-${campo('Correo electrónico', I.mail, 'ana.gomez@mail.com', { ayuda: 'Te vamos a mandar un mail para confirmarlo.' })}
+${campo('Correo electrónico', I.mail, 'ana.gomez@gmail.com', { ayuda: 'Gmail, Hotmail, Outlook, Yahoo o iCloud.' })}
 ${campo('Contraseña', I.candado, '<span style="letter-spacing:.22em">••••••••</span>')}
 <div class="reglas">${['Al menos 8 caracteres', 'Al menos una letra', 'Al menos un número']
       .map((r) => `<div class="regla ok">${svg(I.checkCirculo, 14)}${r}</div>`)

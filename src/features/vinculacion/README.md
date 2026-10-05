@@ -50,6 +50,5 @@ Crear una cuenta nueva desde el Login y usar los códigos de prueba de `src/api/
 ## Pendiente
 
 - Endpoints en el backend (`PENDIENTE BACKEND`, ver `docs/vinculacion-kit.md`).
-- Verificación del mail antes de vincular (decisión abierta, con Firebase).
 - Editar la ubicación de las cámaras y el residente después, desde Perfil.
 - Invitar a otros familiares (RF12) desde Perfil.

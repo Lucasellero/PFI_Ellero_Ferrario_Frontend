@@ -19,7 +19,8 @@ const tel = validarTelefonoAR('11 15 2345-6789');
 
 | Función | Regla |
 |---|---|
-| `validarEmail` | `algo@algo.dominio`, sin espacios, hasta 254 caracteres. Devuelve en minúsculas y sin espacios alrededor. |
+| `validarEmail` | `algo@algo.dominio`, sin espacios, hasta 254 caracteres. Devuelve en minúsculas y sin espacios alrededor. Login y recuperar contraseña. |
+| `validarEmailRegistro` | `validarEmail` + dominio en `DOMINIOS_PERMITIDOS` (Gmail, Hotmail, Outlook, Live, Yahoo, iCloud y sus `.com.ar`; `mail.com` por la demo). Solo al crear cuenta: reemplaza la verificación por mail, que el informe descartó. |
 | `validarContrasenaNueva` / `reglasContrasena` | 8+ caracteres, al menos una letra y un número. `reglasContrasena` da la lista para mostrarla en vivo. Solo para **crear** contraseña: en el login no se exige (una cuenta vieja podría no cumplirla). |
 | `validarConfirmacion` | Igual a la contraseña. |
 | `validarNombre` | 2 a 60 caracteres; letras con tildes, espacios, apóstrofo, punto y guion. Colapsa espacios repetidos. |

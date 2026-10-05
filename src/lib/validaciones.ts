@@ -24,6 +24,38 @@ export function validarEmail(texto: string): Resultado {
   return ok(limpio);
 }
 
+/**
+ * Proveedores de correo aceptados al CREAR una cuenta. Reemplaza la verificación por mail (el
+ * informe la descartó): un proveedor conocido reduce las cuentas con mails mal tipeados o
+ * descartables. `mail.com` está por la cuenta demo (`ana.gomez@mail.com`).
+ */
+export const DOMINIOS_PERMITIDOS = [
+  'gmail.com',
+  'googlemail.com',
+  'hotmail.com',
+  'hotmail.com.ar',
+  'outlook.com',
+  'outlook.com.ar',
+  'live.com',
+  'live.com.ar',
+  'yahoo.com',
+  'yahoo.com.ar',
+  'icloud.com',
+  'me.com',
+  'mail.com',
+] as const;
+
+/** Como `validarEmail`, y además exige un proveedor de `DOMINIOS_PERMITIDOS`. Solo para el registro. */
+export function validarEmailRegistro(texto: string): Resultado {
+  const v = validarEmail(texto);
+  if (!v.ok) return v;
+  const dominio = v.valor.split('@')[1];
+  if (!(DOMINIOS_PERMITIDOS as readonly string[]).includes(dominio)) {
+    return error('Usá un correo de Gmail, Hotmail, Outlook, Yahoo o iCloud.');
+  }
+  return v;
+}
+
 // ── Contraseña ────────────────────────────────────────────────────────────────
 
 export const CONTRASENA_MIN = 8;

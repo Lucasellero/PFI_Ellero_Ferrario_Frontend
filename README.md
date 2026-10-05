@@ -305,7 +305,7 @@ Verificado `typecheck`, `lint` y probado en un iPhone con Expo Go: el spinner ya
   404/409/429.
 - **[`docs/vinculacion-kit.md`](docs/vinculacion-kit.md):** flujo, formato del QR, contrato con el
   backend, seguridad y **los cambios al diagrama de base de datos** (entidad nueva KIT, campos
-  nuevos en RESIDENTE y EVENTO, tablas de push e invitaciones), con el diagrama completo en
+  nuevos en RESIDENTE, EVENTO y FAMILIAR), con el diagrama completo en
   Mermaid para rehacer la Figura 3.8.
 - Perfil muestra el kit vinculado y el teléfono formateado; Reportes explica que "Lares está
   aprendiendo la rutina" cuando el hogar es nuevo.
@@ -315,7 +315,7 @@ Verificado `typecheck`, `lint` y probado en un iPhone con Expo Go: el spinner ya
 **Decisiones**
 - **El QR se escanea desde la app**, después de crear la cuenta (como Google Nest o Ring), y no
   desde el panel local de la Raspberry: un solo lugar para crear cuentas, no hace falta estar en
-  el wifi de la casa, y el panel local queda como herramienta técnica.
+  el wifi de la casa, y el panel local queda como opcional (familia y soporte presencial).
 - **KIT como entidad aparte de HOGAR:** la credencial es del aparato; si se reemplaza la
   controladora, el hogar conserva su historial.
 - **El residente se guarda al final:** "hogar con residente" es la señal de configuración
@@ -331,8 +331,26 @@ Verificado `typecheck`, `lint` y probado en un iPhone con Expo Go: el spinner ya
 - **Login:** mismo mensaje para mail inexistente y contraseña incorrecta (no revela qué mails
   tienen cuenta). Las reglas de contraseña fuerte son solo para crearla.
 
-**Pendiente:** endpoints y tablas en el backend; verificación del mail (Firebase); editar
-residente y cámaras desde Perfil; invitar familiares (RF12).
+**Pendiente:** endpoints y tablas en el backend; editar residente y cámaras desde Perfil;
+invitar familiares (RF12).
+
+### 2026-10-05 — Mockups nuevos y decisiones cerradas en el informe
+
+**Qué se hizo**
+- **Mockups** de las pantallas 06 a 12 y de todas en modo oscuro, con el estilo del informe
+  (`docs/mockups/`), y las imágenes listas para el informe en `docs/informe/imagenes/`.
+- Al pasar la vinculación al informe se cerraron decisiones, aplicadas acá:
+  - **Sin verificación de mail.** Al crear la cuenta solo se aceptan proveedores conocidos
+    (`validarEmailRegistro` y `DOMINIOS_PERMITIDOS` en `src/lib/validaciones.ts`); el login sigue
+    aceptando cualquier dominio. Ayuda del campo: "Gmail, Hotmail, Outlook, Yahoo o iCloud."
+  - **Base de datos:** `push_token` en FAMILIAR (sin tabla de dispositivos), sin INVITACION,
+    `HOGAR.direccion` opcional. Diagrama Mermaid actualizado en `docs/vinculacion-kit.md`.
+  - **Hardware:** el wifi de la Raspberry sostiene las 3 cámaras, sin adaptador USB.
+  - **Panel local:** opcional para la familia; soporte técnico solo presencial.
+  - **Requerimientos:** RF10 = el familiar ubica las cámaras desde la app; RF14 nuevo =
+    vinculación por QR. Cámara adicional: USD 19 con IVA.
+- `docs/cambios-informe-vinculacion.md` marcado como aplicado.
+- Verificado: `typecheck` y `lint`.
 
 ---
 
@@ -344,7 +362,7 @@ En orden sugerido:
    ajustar detalles visuales contra los mockups.
 2. **Backend: vinculación del kit** — actualizar el diagrama de base de datos (Figura 3.8) y el
    modelo con los cambios de [`docs/vinculacion-kit.md`](docs/vinculacion-kit.md) (KIT,
-   `Residente.telefono`, resolución de eventos), y sumar `GET/POST /me`, `POST /kits/vincular`,
+   `Residente.telefono`, resolución de eventos, `Familiar.push_token`), y sumar `GET/POST /me`, `POST /kits/vincular`,
    cámaras y residente.
 3. **Backend: el resto de los endpoints** (lista y forma propuesta en
    [`src/api/README.md`](src/api/README.md)): marcar alerta como resuelta, `ubicacion` en el
@@ -353,7 +371,7 @@ En orden sugerido:
    punto 2) y conectar el login real ([`src/features/auth/README.md`](src/features/auth/README.md)).
 5. **Push (RF8):** pasar a *development build*, registrar el token del celular en el backend
    (`cloud/README.md` → punto 3) y abrir el detalle de la alerta al tocar la notificación.
-6. **App:** editar residente y cámaras desde Perfil, invitar familiares (RF12) y pantalla de
-   verificación del mail.
+6. **App:** editar residente y cámaras desde Perfil e invitar familiares que ya tienen cuenta
+   (RF12).
 7. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

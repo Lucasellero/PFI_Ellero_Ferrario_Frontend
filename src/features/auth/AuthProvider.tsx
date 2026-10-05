@@ -9,7 +9,13 @@ import { createContext, use, useState, type ReactNode } from 'react';
 
 import { api, configurarTokenProvider } from '@/api/client';
 import { EMAIL_DEMO } from '@/api/mock';
-import { validarConfirmacion, validarContrasenaNueva, validarEmail, validarNombre } from '@/lib/validaciones';
+import {
+  validarConfirmacion,
+  validarContrasenaNueva,
+  validarEmail,
+  validarEmailRegistro,
+  validarNombre,
+} from '@/lib/validaciones';
 
 export interface Usuario {
   uid: string;
@@ -28,7 +34,8 @@ interface AuthContextValue {
   iniciarSesion(email: string, contrasena: string): Promise<void>;
   /**
    * Crea la cuenta y deja la sesión iniciada. Con Firebase: `createUserWithEmailAndPassword` +
-   * `sendEmailVerification` + `POST /me` (crea el `Familiar` en el backend con el nombre).
+   * `POST /me` (crea el `Familiar` en el backend con el nombre). Sin mail de verificación: el
+   * informe la descartó y en su lugar solo se aceptan proveedores conocidos (`validarEmailRegistro`).
    */
   registrarCuenta(datos: DatosRegistro): Promise<void>;
   cerrarSesion(): Promise<void>;
@@ -77,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Se revalida acá aunque la pantalla ya valide: es la última barrera antes de crear la
       // cuenta (y Firebase/backend validan de nuevo del otro lado).
       const n = validarNombre(nombre, 'tu nombre');
-      const m = validarEmail(email);
+      const m = validarEmailRegistro(email);
       const c = validarContrasenaNueva(contrasena);
       const r = validarConfirmacion(contrasena, confirmacion);
       const primerError = [n, m, c, r].find((x) => !x.ok);

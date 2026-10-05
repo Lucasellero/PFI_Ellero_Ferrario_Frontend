@@ -33,7 +33,7 @@
 | `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` (propuesto) | ❌ **Falta.** Necesita exponer la línea base de `baseline/` |
 | — | campo `ubicacion` en `EventoOut` | ❌ **Falta.** Join con `Camara.ubicacion`; la app lo muestra si viene |
 | — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ❌ **Falta.** Hoy la app pide los últimos 200 y filtra local |
-| — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño en `cloud/README.md` → "Cómo seguir" punto 3; la app propone una tabla `DISPOSITIVO_FAMILIAR` (ver `docs/vinculacion-kit.md`) |
+| — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño en `cloud/README.md` → "Cómo seguir" punto 3; decidido: columna `push_token` (null) en `Familiar` (ver `docs/vinculacion-kit.md`) |
 | `crearPerfil` | `POST /me` | ❌ **Falta.** Crea el `Familiar` al registrarse |
 | `vincularKit` | `POST /kits/vincular` | ❌ **Falta.** Necesita la tabla nueva `KIT` |
 | `listarCamaras` | `GET /hogares/{id}/camaras` | ❌ **Falta** (hoy solo existe el alta desde la controladora) |
