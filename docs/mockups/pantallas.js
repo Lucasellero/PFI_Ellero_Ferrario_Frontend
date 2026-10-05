@@ -180,8 +180,13 @@ ${campo('Repetí la contraseña', I.candado, '<span style="letter-spacing:.22em"
     titulo: '08 · Escanear el QR',
     sub: 'Paso 1 · con la cámara del celular',
     camara: true, // pantalla completa de cámara: barra de estado clara sobre fondo negro
-    html: () => `<div class="cam"><div class="mueble"></div><div class="lar"><i></i></div><div class="etq">${QR}</div></div>
-<div class="marco"></div><div class="indic">Encuadrá el QR de la etiqueta de la controladora</div>
+    html: () => `<div class="cam"><div class="luz"></div><div class="cuadro"></div><div class="planta"></div><div class="mesa"></div>
+<div class="lar"><div class="led"></div><div class="etq">${QR}<small>LR-000124</small><b>4HDW-8R2N</b></div><span class="marca">LAR</span></div></div>
+<div class="dim"></div>
+<svg class="esquinas" width="152" height="190" viewBox="0 0 152 190" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">
+<path d="M3 32V11a8 8 0 0 1 8-8h21M120 3h21a8 8 0 0 1 8 8v21M3 158v21a8 8 0 0 0 8 8h21M120 187h21a8 8 0 0 0 8-8v-21"/></svg>
+<div class="detectado"><span>${svg(I.check, 14, 'stroke-width="3"')}QR detectado</span></div>
+<div class="indic">Encuadrá el QR de la etiqueta de la controladora</div>
 <div class="flot arriba">${nav('Volver', 1)}</div>
 <div class="flot abajo"><div class="spin"></div>Vinculando el kit 4HDW-8R2N…</div>`,
   },
