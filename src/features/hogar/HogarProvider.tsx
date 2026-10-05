@@ -8,6 +8,7 @@ import { AppState } from 'react-native';
 
 import { api } from '@/api/client';
 import type { Evento, HogarResumen, Perfil } from '@/api/types';
+import { useCuenta } from '@/features/cuenta/CuentaProvider';
 
 /**
  * Cada cuánto se piden los eventos con la app abierta. Es el reemplazo provisorio de las push
@@ -40,51 +41,44 @@ const HogarContext = createContext<HogarContextValue | null>(null);
 
 const mensajeDeError = (e: unknown) => (e instanceof Error ? e.message : 'Error desconocido');
 
-/** Perfil + eventos del primer hogar. No toca estado de React: devuelve el resultado o el error. */
-async function pedirPerfilYEventos(): Promise<{ perfil: Perfil; eventos: Evento[] } | { error: string }> {
+/** Eventos de un hogar. No toca estado de React: devuelve el resultado o el error. */
+async function pedirEventos(hogarId: number): Promise<{ eventos: Evento[] } | { error: string }> {
   try {
-    const perfil = await api.obtenerPerfil();
-    const h = perfil.hogares[0];
-    return { perfil, eventos: h ? await api.listarEventos(h.id) : [] };
+    return { eventos: await api.listarEventos(hogarId) };
   } catch (e) {
     return { error: mensajeDeError(e) };
   }
 }
 
 export function HogarProvider({ children }: { children: ReactNode }) {
-  const [perfil, setPerfil] = useState<Perfil | null>(null);
+  // El perfil y el hogar los carga `CuentaProvider` (hacen falta antes, para decidir si mostrar
+  // la vinculación o las pestañas). Acá solo viven los eventos.
+  const { perfil, hogarActivo: hogar, recargarPerfil } = useCuenta();
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const hogar = perfil?.hogares[0] ?? null;
-
-  function aplicarResultado(r: { perfil: Perfil; eventos: Evento[] } | { error: string }) {
+  function aplicarResultado(r: { eventos: Evento[] } | { error: string }) {
     if ('error' in r) {
       setError(r.error);
     } else {
-      setPerfil(r.perfil);
       setEventos(r.eventos);
       setError(null);
     }
     setCargando(false);
   }
 
-  async function cargarTodo() {
-    setCargando(true);
-    setError(null);
-    aplicarResultado(await pedirPerfilYEventos());
-  }
-
   // Carga inicial. `cargando` ya arranca en true; el estado se actualiza recién cuando
   // llega la respuesta (setState sincrónico dentro de un effect es un antipatrón).
+  const idInicial = hogar?.id;
   useEffect(() => {
+    if (idInicial == null) return;
     let vigente = true;
-    pedirPerfilYEventos().then((r) => vigente && aplicarResultado(r));
+    pedirEventos(idInicial).then((r) => vigente && aplicarResultado(r));
     return () => {
       vigente = false;
     };
-  }, []);
+  }, [idInicial]);
 
   // Actualización automática: cada 30 s con la app en primer plano, y apenas vuelve a primer
   // plano (el familiar abre la app después de un rato). En segundo plano no consulta: iOS y
@@ -124,7 +118,7 @@ export function HogarProvider({ children }: { children: ReactNode }) {
     cargando,
     error,
     async recargar() {
-      if (!hogar) return cargarTodo();
+      if (!hogar) return recargarPerfil();
       try {
         const nuevos = await api.listarEventos(hogar.id);
         setEventos((previos) => fusionarEventos(previos, nuevos));

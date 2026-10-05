@@ -33,9 +33,16 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
 
   return {
     obtenerPerfil: async () => pendiente('GET /me'),
+    crearPerfil: async () => pendiente('POST /me'),
     listarEventos: (hogarId, { limit = 200 } = {}) =>
       request<Evento[]>(`/hogares/${hogarId}/eventos?limit=${limit}`),
     marcarResuelta: async () => pendiente('marcar alerta como resuelta'),
     obtenerResumenRutina: async () => pendiente('resumen de rutina'),
+    // Vinculación del kit: contrato en docs/vinculacion-kit.md. Cuando el backend los sume,
+    // reemplazar por request<...>() con la ruta indicada en `client.ts`.
+    vincularKit: async () => pendiente('POST /kits/vincular'),
+    listarCamaras: async () => pendiente('GET /hogares/{id}/camaras'),
+    actualizarCamara: async () => pendiente('PATCH /hogares/{id}/camaras/{camara_id}'),
+    guardarResidente: async () => pendiente('PUT /hogares/{id}/residente'),
   };
 }

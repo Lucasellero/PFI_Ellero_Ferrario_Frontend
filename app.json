@@ -22,6 +22,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Lares usa la cámara solo para leer el código QR de tu kit. No se guarda ninguna imagen.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#F8F7F2",

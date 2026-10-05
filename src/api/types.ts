@@ -97,14 +97,69 @@ export interface Evento {
 /** PENDIENTE BACKEND (`GET /me`): quién es el familiar logueado y a qué hogares accede. */
 export interface Perfil {
   familiar: { id: number; nombre: string; email: string };
-  hogares: HogarResumen[];
+  /**
+   * Vacío = cuenta recién creada, todavía sin kit vinculado → la app muestra la vinculación.
+   * Un hogar con `residente: null` = kit vinculado pero sin terminar la configuración inicial.
+   */
+  hogares: HogarApi[];
 }
 
-export interface HogarResumen {
+export interface Residente {
   id: number;
   nombre: string;
+  /** E.164, ej. "+5491123456789". PENDIENTE BACKEND: columna `Residente.telefono`. */
+  telefono: string | null;
+}
+
+/** Hogar tal como lo manda `GET /me`. */
+export interface HogarApi {
+  id: number;
+  nombre: string;
+  /** `HogarFamiliar.rol`: "responsable_principal" | "familiar". */
   rol: string;
-  residente: { id: number; nombre: string; telefono: string | null };
+  residente: Residente | null;
+  /** PENDIENTE BACKEND: el kit vinculado a este hogar (tabla `KIT`). */
+  kit: KitResumen | null;
+}
+
+/**
+ * Kit tal como viene de fábrica. `cantidad_camaras` es el plan que compró el cliente (1 a 3,
+ * informe Sección 3.9.2.1: el kit trae 1 cámara y se pueden sumar hasta 3 por controladora).
+ * Es el máximo de cámaras que el hogar puede configurar.
+ */
+export interface KitResumen {
+  numero_serie: string;
+  cantidad_camaras: number;
+}
+
+/** Hogar con la configuración inicial terminada: es el que usan las pestañas. */
+export interface HogarResumen extends HogarApi {
+  residente: Residente;
+}
+
+// ── Vinculación del kit (PENDIENTE BACKEND — ver docs/vinculacion-kit.md) ─────
+
+/** `GET /hogares/{id}/camaras` y `PATCH /hogares/{id}/camaras/{camara_id}`. */
+export interface Camara {
+  id: number;
+  /** Id de la cámara en `cameras.yaml` de la controladora (Lar), ej. "cam1". */
+  local_id: string;
+  /** "Living", "Cocina"... La carga el familiar en la configuración inicial. */
+  ubicacion: string | null;
+  activa: boolean;
+}
+
+/** Respuesta de `POST /kits/vincular`. */
+export interface KitVinculado extends KitResumen {
+  hogar_id: number;
+  /** Las cámaras del plan, creadas en fábrica junto con el kit (`camaras.length === cantidad_camaras`). */
+  camaras: Camara[];
+}
+
+/** Body de `PUT /hogares/{id}/residente`. */
+export interface DatosResidente {
+  nombre: string;
+  telefono: string | null;
 }
 
 export type Periodo = 'hoy' | 'semana' | 'mes';

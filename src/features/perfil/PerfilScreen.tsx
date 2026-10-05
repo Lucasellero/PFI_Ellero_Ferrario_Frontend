@@ -8,6 +8,7 @@ import { EncabezadoPantalla } from '@/components/EncabezadoPantalla';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useHogar } from '@/features/hogar/HogarProvider';
 import { API_MODE } from '@/config';
+import { formatearTelefonoAR } from '@/lib/validaciones';
 import { radius, spacing, useEstilos, useTema, type PreferenciaTema, type Tema } from '@/theme';
 
 const ROLES: Record<string, string> = {
@@ -42,7 +43,18 @@ export function PerfilScreen() {
           <View style={styles.card}>
             <Fila icono="home" titulo="Hogar" valor={hogar.nombre} />
             <Fila icono="user" titulo="Residente" valor={hogar.residente.nombre} />
-            <Fila icono="phone" titulo="Teléfono del residente" valor={hogar.residente.telefono ?? 'Sin cargar'} />
+            <Fila
+              icono="phone"
+              titulo="Teléfono del residente"
+              valor={hogar.residente.telefono ? formatearTelefonoAR(hogar.residente.telefono) : 'Sin cargar'}
+            />
+            {hogar.kit && (
+              <Fila
+                icono="cpu"
+                titulo="Kit vinculado"
+                valor={`${hogar.kit.numero_serie} · ${hogar.kit.cantidad_camaras} ${hogar.kit.cantidad_camaras === 1 ? 'cámara' : 'cámaras'}`}
+              />
+            )}
             <Fila icono="shield" titulo="Tu rol" valor={ROLES[hogar.rol] ?? hogar.rol} ultima />
           </View>
         )}
@@ -88,7 +100,7 @@ function Fila({
   valor,
   ultima,
 }: {
-  icono: 'home' | 'user' | 'phone' | 'shield';
+  icono: 'home' | 'user' | 'phone' | 'shield' | 'cpu';
   titulo: string;
   valor: string;
   ultima?: boolean;

@@ -28,6 +28,8 @@ del residente.
 | Conexión al backend real | ⏳ Parcial — solo existe `GET /hogares/{id}/eventos`; el resto de endpoints falta en el backend (ver [`src/api/README.md`](src/api/README.md)) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
+| Crear cuenta + vinculación del kit por QR + configuración inicial (residente, cámaras) | ✅ Hecho en la app con el mock · ⏳ endpoints y tablas pendientes en el backend ([`docs/vinculacion-kit.md`](docs/vinculacion-kit.md)) |
+| Validación de formularios (mail, contraseña, nombre, teléfono, código del kit) | ✅ Hecha ([`src/lib/README.md`](src/lib/README.md)) |
 
 ---
 
@@ -77,9 +79,14 @@ npx expo start
 
 Escanear el QR con Expo Go (Android) o con la cámara (iOS).
 
-**Login en modo demo:** cualquier correo válido + cualquier contraseña de 6 o más caracteres
-(ej. `ana.gomez@mail.com` / `123456`). La sesión no se guarda: al recargar la app hay que volver
-a entrar.
+**Probar en modo demo:**
+- **Cuenta con datos:** `ana.gomez@mail.com` con cualquier contraseña de 6 o más caracteres →
+  entra directo con alertas y reportes de prueba.
+- **Cuenta nueva (vinculación del kit):** "Creá tu cuenta" en el Login con cualquier otro mail →
+  escanear el QR o ingresar el código `7K3P-9QXM` (más códigos de prueba en
+  [`src/api/README.md`](src/api/README.md)).
+
+La sesión y las cuentas creadas no se guardan: al recargar la app hay que volver a entrar.
 
 ### Modo mock vs. backend real
 
@@ -108,25 +115,30 @@ Los dos tienen que pasar sin errores.
 ```
 src/
 ├── app/                  Rutas (Expo Router). Archivos FINOS: solo importan una pantalla de features/.
-│   ├── _layout.tsx       Raíz: sesión + rutas protegidas (sin sesión → /login)
-│   ├── login.tsx
+│   ├── _layout.tsx       Raíz: tema + sesión + cuenta; rutas protegidas según la etapa de la cuenta
+│   ├── login.tsx, registro.tsx
+│   ├── vinculacion/      Vincular el kit por QR + configuración inicial (3 pasos)
 │   └── (tabs)/           Pestañas: index (Notificaciones), reportes, perfil
 ├── features/             Una carpeta por funcionalidad, cada una con su README
-│   ├── auth/             Sesión y pantalla de Login
-│   ├── hogar/            Estado compartido: perfil, residente, eventos
+│   ├── auth/             Sesión, Login y Crear cuenta
+│   ├── cuenta/           Perfil (GET /me) y etapa de la cuenta: sin hogar / configurando / lista
+│   ├── vinculacion/      Escanear el QR, código a mano, residente, cámaras
+│   ├── hogar/            Estado compartido de las pestañas: eventos del hogar
 │   ├── eventos/          Lógica común de eventos: severidad, textos, formato, tarjeta, detalle
 │   ├── notificaciones/   Home: estado del día, filtros, feed
 │   ├── reportes/         Rutina vs. lo habitual + eventos del período
 │   └── perfil/           Datos de la cuenta, cerrar sesión
-├── components/           Componentes visuales genéricos (Botón, Chip, Encabezado...)
+├── components/           Componentes visuales genéricos (Botón, Chip, CampoTexto, BarraSuperior...)
+├── lib/                  Utilidades sin interfaz (validaciones de formularios)
 ├── api/                  Acceso a datos: tipos, cliente HTTP, mock
-├── theme/                Colores, espaciados, tipografía
+├── theme/                Colores (claro y oscuro), espaciados, tipografía
 └── config/               Variables de entorno
+docs/                     Diseños que cruzan app y backend (ej. vinculacion-kit.md)
 ```
 
-**Regla de dependencias:** `app/` → `features/` → `components/`, `api/`, `theme/`. Una feature
-puede usar `eventos/` y `hogar/` (son compartidas); el resto de las features no se importan entre
-sí. Ninguna pantalla llama a `fetch` directo: todo pasa por `src/api`.
+**Regla de dependencias:** `app/` → `features/` → `components/`, `lib/`, `api/`, `theme/`. Una
+feature puede usar `auth/`, `cuenta/`, `eventos/` y `hogar/` (son compartidas); el resto de las
+features no se importan entre sí. Ninguna pantalla llama a `fetch` directo: todo pasa por `src/api`.
 
 ---
 
@@ -190,7 +202,7 @@ sí. Ninguna pantalla llama a `fetch` directo: todo pasa por `src/api`.
 **Qué se hizo**
 - Se aplicó la sección **"Branding"** del informe (cap. 3), tomada de la última versión del
   repo del informe (commits del 2026-10-01 en `origin/main`).
-- **Paleta oficial** en [`src/theme/index.ts`](src/theme/index.ts): verde principal `#1F5D4B`,
+- **Paleta oficial** en [`src/theme/paletas.ts`](src/theme/paletas.ts): verde principal `#1F5D4B`,
   verde secundario `#AFC9BC`, fondo `#F8F7F2`, neutro `#D8D4C8`, y semáforo alta `#D96863`,
   media `#E4C26B`, baja `#6DA88A`.
 - **Login** como el mockup 01 actualizado: símbolo del logo en un cuadrado blanco, "LARES" en
@@ -273,6 +285,53 @@ oculta), y iOS no lo limpia bien en una lista que no se ve.
 duración mínima de 600 ms para que la respuesta no llegue en medio de la animación de entrada.
 Verificado `typecheck`, `lint` y probado en un iPhone con Expo Go: el spinner ya no queda trabado.
 
+### 2026-10-04 — Crear cuenta, vinculación del kit por QR y validaciones
+
+**Qué se hizo**
+- **Crear cuenta** desde el Login (nombre, mail, contraseña y confirmación).
+- **Vinculación del kit** en 3 pasos: (1) escanear el QR de la controladora con la cámara
+  (`expo-camera`) o tipear el código, (2) nombre y teléfono del residente, (3) ubicación de cada
+  cámara. Al terminar, la app pasa sola a las pestañas.
+- **`CuentaProvider`** (`features/cuenta/`): pide `GET /me` apenas hay sesión y define la etapa de
+  la cuenta (sin hogar / configurando / lista); el layout raíz muestra login, vinculación o
+  pestañas según eso. El perfil se movió de `HogarProvider` acá.
+- **Validaciones** en `src/lib/validaciones.ts` (mail, contraseña, nombre, teléfono argentino a
+  E.164, texto corto) y del código del kit en `features/vinculacion/codigoKit.ts`. Errores por
+  campo con `CampoTexto`. Probadas con 31 casos.
+- **API:** `crearPerfil`, `vincularKit`, `listarCamaras`, `actualizarCamara`, `guardarResidente`
+  (todos `PENDIENTE BACKEND`), funcionando en el mock con cuentas, kits de prueba y errores
+  404/409/429.
+- **[`docs/vinculacion-kit.md`](docs/vinculacion-kit.md):** flujo, formato del QR, contrato con el
+  backend, seguridad y **los cambios al diagrama de base de datos** (entidad nueva KIT, campos
+  nuevos en RESIDENTE y EVENTO, tablas de push e invitaciones), con el diagrama completo en
+  Mermaid para rehacer la Figura 3.8.
+- Perfil muestra el kit vinculado y el teléfono formateado; Reportes explica que "Lares está
+  aprendiendo la rutina" cuando el hogar es nuevo.
+- Verificado: `typecheck`, `lint`, `expo-doctor` (18/18) y bundle de Android. **No probado
+  todavía en un celular** (el escáner necesita uno de verdad).
+
+**Decisiones**
+- **El QR se escanea desde la app**, después de crear la cuenta (como Google Nest o Ring), y no
+  desde el panel local de la Raspberry: un solo lugar para crear cuentas, no hace falta estar en
+  el wifi de la casa, y el panel local queda como herramienta técnica.
+- **KIT como entidad aparte de HOGAR:** la credencial es del aparato; si se reemplaza la
+  controladora, el hogar conserva su historial.
+- **El residente se guarda al final:** "hogar con residente" es la señal de configuración
+  terminada, sin campos extra en el backend.
+- **El plan del kit fija las cámaras:** cada kit sale de fábrica con 1 a 3 cámaras (lo que se
+  compró, Sección 3.9.2.1 del informe) y la app solo deja ubicar esas. En la base de datos,
+  `KIT.cantidad_camaras` y CAMARA ligada al KIT desde fábrica.
+- **Instalación sin configurar nada:** la controladora sale a internet por cable al router
+  (viene en la caja), sin monitor; las cámaras usan una red privada de la controladora sin
+  salida a internet. Detalle en `docs/vinculacion-kit.md`, sección 2.
+- **Teléfono solo de Argentina**, guardado en formato internacional; celular o fijo según el 9 o
+  el 15.
+- **Login:** mismo mensaje para mail inexistente y contraseña incorrecta (no revela qué mails
+  tienen cuenta). Las reglas de contraseña fuerte son solo para crearla.
+
+**Pendiente:** endpoints y tablas en el backend; verificación del mail (Firebase); editar
+residente y cámaras desde Perfil; invitar familiares (RF12).
+
 ---
 
 ## Próximos pasos
@@ -281,12 +340,18 @@ En orden sugerido:
 
 1. **Actualizar Node a 22 LTS** y **probar la app en los celulares** de los dos con Expo Go;
    ajustar detalles visuales contra los mockups.
-2. **Backend: endpoints que faltan** (lista y forma propuesta en
-   [`src/api/README.md`](src/api/README.md)): `GET /me`, marcar alerta como resuelta, `ubicacion`
-   en el evento, resumen de rutina, filtros por tipo/fecha (RF13).
-3. **Firebase:** crear el proyecto (runbook en `cloud/README.md` del Backend, "Cómo seguir" →
+2. **Backend: vinculación del kit** — actualizar el diagrama de base de datos (Figura 3.8) y el
+   modelo con los cambios de [`docs/vinculacion-kit.md`](docs/vinculacion-kit.md) (KIT,
+   `Residente.telefono`, resolución de eventos), y sumar `GET/POST /me`, `POST /kits/vincular`,
+   cámaras y residente.
+3. **Backend: el resto de los endpoints** (lista y forma propuesta en
+   [`src/api/README.md`](src/api/README.md)): marcar alerta como resuelta, `ubicacion` en el
+   evento, resumen de rutina, filtros por tipo/fecha (RF13).
+4. **Firebase:** crear el proyecto (runbook en `cloud/README.md` del Backend, "Cómo seguir" →
    punto 2) y conectar el login real ([`src/features/auth/README.md`](src/features/auth/README.md)).
-4. **Push (RF8):** pasar a *development build*, registrar el token del celular en el backend
+5. **Push (RF8):** pasar a *development build*, registrar el token del celular en el backend
    (`cloud/README.md` → punto 3) y abrir el detalle de la alerta al tocar la notificación.
-5. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
+6. **App:** editar residente y cámaras desde Perfil, invitar familiares (RF12) y pantalla de
+   verificación del mail.
+7. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

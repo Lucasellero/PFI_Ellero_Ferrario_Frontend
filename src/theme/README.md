@@ -61,6 +61,8 @@ Criterios de la paleta oscura (no es invertir la clara):
   oscuro el texto necesita un verde más claro para leerse.
 - **Semáforo:** los colores oficiales se mantienen iguales (sobre fondo oscuro se leen bien); se
   oscurecen los `XSuave` y se aclaran los `XTexto`.
+- **Escáner de QR** (`fondoCamara`, `sobreCamara`): negro y blanco en los dos modos, porque se
+  dibujan sobre la imagen de la cámara.
 - **El logo va siempre sobre crema** (`fondoLogo`): la persona verde oscura del símbolo no se ve
   sobre fondo oscuro. Lo mismo el splash oscuro (`splash-icon-dark.png`).
 

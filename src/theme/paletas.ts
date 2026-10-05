@@ -47,6 +47,9 @@ export const paletaClara = {
 
   overlay: 'rgba(20, 28, 24, 0.45)', // fondo detrás del bottom sheet
   sombra: '#000000',
+  // Escáner de QR: se dibuja sobre la imagen de la cámara, igual en los dos modos.
+  fondoCamara: '#000000',
+  sobreCamara: '#FFFFFF',
 };
 
 export type Colores = { [K in keyof typeof paletaClara]: string };
@@ -86,6 +89,8 @@ export const paletaOscura: Colores = {
 
   overlay: 'rgba(0, 0, 0, 0.6)',
   sombra: '#000000',
+  fondoCamara: '#000000',
+  sobreCamara: '#FFFFFF',
 };
 
 export const spacing = {

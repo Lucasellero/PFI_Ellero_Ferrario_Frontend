@@ -3,26 +3,44 @@
  *
  * Los eventos imitan exactamente lo que hoy emiten `vision/`, `runner/` y
  * `cloud/app/baseline_runner.py` (mismos `event_type` y claves de `metadata`), y se generan
- * relativos a "ahora" para que siempre haya datos de hoy. El estado (alertas resueltas) se
- * pierde al recargar la app.
+ * relativos a "ahora" para que siempre haya datos de hoy.
+ *
+ * También simula cuentas, kits y hogares para probar la vinculación por QR:
+ * - `ana.gomez@mail.com` es la cuenta demo, con un hogar ya configurado y eventos.
+ * - Cualquier cuenta creada desde "Crear cuenta" arranca sin hogar → vinculación.
+ * - Kits libres para probar: ver `KITS_DEMO` (los códigos están en src/api/README.md).
+ * Todo el estado se pierde al recargar la app.
  */
 import type { Api } from './client';
-import type { Evento, EventoMetadata, EventType, Perfil, Periodo, ResumenRutina } from './types';
+import { ApiError } from './errors';
+import type {
+  Camara,
+  Evento,
+  EventoMetadata,
+  EventType,
+  HogarApi,
+  KitResumen,
+  Perfil,
+  Periodo,
+  Residente,
+  ResumenRutina,
+} from './types';
 
 const LATENCIA_MS = 400;
 const esperar = () => new Promise((r) => setTimeout(r, LATENCIA_MS));
 
-const PERFIL: Perfil = {
-  familiar: { id: 1, nombre: 'Ana Gómez', email: 'ana.gomez@mail.com' },
-  hogares: [
-    {
-      id: 1,
-      nombre: 'Casa de Rosa',
-      rol: 'responsable_principal',
-      residente: { id: 1, nombre: 'Rosa Méndez', telefono: '+5491100000000' },
-    },
-  ],
-};
+export const EMAIL_DEMO = 'ana.gomez@mail.com';
+
+/**
+ * Kits "de fábrica". `hogarId` null = todavía no vinculado. El LR-000101 es el de la cuenta demo
+ * (sirve para probar el error "kit ya vinculado").
+ */
+export const KITS_DEMO = [
+  { serie: 'LR-000101', codigo: 'Q9TB6XJV', cantidadCamaras: 3 },
+  { serie: 'LR-000123', codigo: '7K3P9QXM', cantidadCamaras: 3 },
+  { serie: 'LR-000124', codigo: '4HDW8R2N', cantidadCamaras: 1 },
+  { serie: 'LR-000125', codigo: 'M2VC5ZKA', cantidadCamaras: 2 },
+] as const;
 
 const CAMARAS: Record<number, string> = { 1: 'Living', 2: 'Cocina', 3: 'Dormitorio' };
 
@@ -163,29 +181,210 @@ const RESUMENES: Record<Periodo, ResumenRutina> = {
   },
 };
 
-export function crearMockApi(): Api {
-  const eventos = generarEventos();
+
+/** Lo que el backend guardaría por hogar (tablas HOGAR, RESIDENTE, CAMARA, EVENTO). */
+interface HogarMock {
+  id: number;
+  nombre: string;
+  residente: Residente | null;
+  kit: KitResumen;
+  camaras: Camara[];
+  eventos: Evento[];
+  /** Solo la cuenta demo tiene línea base armada (Reportes). */
+  conLineaBase: boolean;
+}
+
+interface FamiliarMock {
+  id: number;
+  nombre: string;
+  email: string;
+  /** Tabla HOGAR_FAMILIAR. */
+  hogares: { hogarId: number; rol: string }[];
+}
+
+/** Intentos fallidos de vinculación antes de bloquear (el backend debería limitar igual). */
+const MAX_INTENTOS = 5;
+
+export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
+  const hogares = new Map<number, HogarMock>();
+  const familiares = new Map<string, FamiliarMock>();
+  const kits = KITS_DEMO.map((k) => ({ ...k, hogarId: null as number | null }));
+  let siguienteHogar = 1;
+  let siguienteFamiliar = 1;
+  let siguienteCamara = 1;
+  let intentosFallidos = 0;
+
+  // ── Cuenta demo: hogar ya configurado, con eventos ─────────────────────────
+  const demo: HogarMock = {
+    id: siguienteHogar++,
+    nombre: 'Casa de Rosa',
+    residente: { id: 1, nombre: 'Rosa Méndez', telefono: '+5491100000000' },
+    kit: { numero_serie: KITS_DEMO[0].serie, cantidad_camaras: KITS_DEMO[0].cantidadCamaras },
+    camaras: Object.entries(CAMARAS).map(([id, ubicacion]) => ({
+      id: Number(id),
+      local_id: `cam${id}`,
+      ubicacion,
+      activa: true,
+    })),
+    eventos: generarEventos(),
+    conLineaBase: true,
+  };
+  siguienteCamara = demo.camaras.length + 1;
+  hogares.set(demo.id, demo);
+  kits[0].hogarId = demo.id;
+  familiares.set(EMAIL_DEMO, {
+    id: siguienteFamiliar++,
+    nombre: 'Ana Gómez',
+    email: EMAIL_DEMO,
+    hogares: [{ hogarId: demo.id, rol: 'responsable_principal' }],
+  });
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  /** En el mock el "token" es `mock:<email>` (lo arma AuthProvider). */
+  async function familiarActual(): Promise<FamiliarMock> {
+    const token = await obtenerToken();
+    const email = token?.startsWith('mock:') ? token.slice(5) : null;
+    if (!email) throw new ApiError(401, 'No hay sesión iniciada.');
+    const f = familiares.get(email);
+    if (!f) throw new ApiError(404, 'Tu cuenta todavía no tiene perfil.');
+    return f;
+  }
+
+  /** Como `_hogar_autorizado` del backend: 403 si el familiar no pertenece al hogar. */
+  async function hogarAutorizado(hogarId: number): Promise<HogarMock> {
+    const f = await familiarActual();
+    const h = hogares.get(hogarId);
+    if (!h || !f.hogares.some((v) => v.hogarId === hogarId)) {
+      throw new ApiError(403, 'No tenés acceso a este hogar.');
+    }
+    return h;
+  }
+
+  function perfilDe(f: FamiliarMock): Perfil {
+    return {
+      familiar: { id: f.id, nombre: f.nombre, email: f.email },
+      hogares: f.hogares.map(({ hogarId, rol }): HogarApi => {
+        const h = hogares.get(hogarId)!;
+        return {
+          id: h.id,
+          nombre: h.nombre,
+          rol,
+          residente: h.residente && { ...h.residente },
+          kit: { ...h.kit },
+        };
+      }),
+    };
+  }
 
   return {
     async obtenerPerfil() {
       await esperar();
-      return PERFIL;
+      return perfilDe(await familiarActual());
     },
-    async listarEventos(_hogarId, { limit = 200 } = {}) {
+
+    async crearPerfil({ nombre }) {
       await esperar();
-      return [...eventos]
+      const token = await obtenerToken();
+      const email = token?.startsWith('mock:') ? token.slice(5) : null;
+      if (!email) throw new ApiError(401, 'No hay sesión iniciada.');
+      const existente = familiares.get(email);
+      if (existente) return perfilDe(existente);
+      const nuevo: FamiliarMock = { id: siguienteFamiliar++, nombre, email, hogares: [] };
+      familiares.set(email, nuevo);
+      return perfilDe(nuevo);
+    },
+
+    async listarEventos(hogarId, { limit = 200 } = {}) {
+      await esperar();
+      const h = await hogarAutorizado(hogarId);
+      return [...h.eventos]
         .sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))
         .slice(0, limit)
         .map((e) => ({ ...e }));
     },
-    async marcarResuelta(_hogarId, eventoId) {
+
+    async marcarResuelta(hogarId, eventoId) {
       await esperar();
-      const e = eventos.find((x) => x.id === eventoId);
+      const h = await hogarAutorizado(hogarId);
+      const e = h.eventos.find((x) => x.id === eventoId);
       if (e) e.resuelta = true;
     },
-    async obtenerResumenRutina(_hogarId, periodo) {
+
+    async obtenerResumenRutina(hogarId, periodo) {
       await esperar();
-      return RESUMENES[periodo];
+      const h = await hogarAutorizado(hogarId);
+      // Un hogar recién vinculado todavía no tiene línea base: los primeros días no hay rangos.
+      return h.conLineaBase ? RESUMENES[periodo] : { periodo, indicadores: [] };
+    },
+
+    async vincularKit(codigo) {
+      await esperar();
+      const f = await familiarActual();
+      if (intentosFallidos >= MAX_INTENTOS) {
+        throw new ApiError(429, 'Demasiados intentos. Esperá unos minutos y probá de nuevo.');
+      }
+      const kit = kits.find((k) => k.codigo === codigo);
+      if (!kit) {
+        intentosFallidos++;
+        throw new ApiError(404, 'Ese código no corresponde a ningún kit. Revisalo en la etiqueta.');
+      }
+      if (kit.hogarId != null) {
+        const h = hogares.get(kit.hogarId)!;
+        // Reintento del mismo familiar (ej. se cortó la conexión después de vincular): idempotente.
+        if (f.hogares.some((v) => v.hogarId === h.id)) {
+          return { hogar_id: h.id, ...h.kit, camaras: h.camaras.map((c) => ({ ...c })) };
+        }
+        throw new ApiError(
+          409,
+          'Este kit ya está vinculado a otro hogar. Pedile a quien lo configuró que te invite desde su app.',
+        );
+      }
+
+      intentosFallidos = 0;
+      const nuevo: HogarMock = {
+        id: siguienteHogar++,
+        nombre: 'Mi hogar',
+        residente: null,
+        kit: { numero_serie: kit.serie, cantidad_camaras: kit.cantidadCamaras },
+        // Las cámaras del plan se crean en fábrica junto con el kit (tantas como compró el
+        // cliente); al vincular pasan al hogar y solo falta la ubicación.
+        camaras: Array.from({ length: kit.cantidadCamaras }, (_, i) => ({
+          id: siguienteCamara++,
+          local_id: `cam${i + 1}`,
+          ubicacion: null,
+          activa: true,
+        })),
+        eventos: [],
+        conLineaBase: false,
+      };
+      hogares.set(nuevo.id, nuevo);
+      kit.hogarId = nuevo.id;
+      f.hogares.push({ hogarId: nuevo.id, rol: 'responsable_principal' });
+      return { hogar_id: nuevo.id, ...nuevo.kit, camaras: nuevo.camaras.map((c) => ({ ...c })) };
+    },
+
+    async listarCamaras(hogarId) {
+      await esperar();
+      const h = await hogarAutorizado(hogarId);
+      return h.camaras.map((c) => ({ ...c }));
+    },
+
+    async actualizarCamara(hogarId, camaraId, { ubicacion }) {
+      await esperar();
+      const h = await hogarAutorizado(hogarId);
+      const c = h.camaras.find((x) => x.id === camaraId);
+      if (!c) throw new ApiError(404, 'Esa cámara no es de este hogar.');
+      c.ubicacion = ubicacion;
+      return { ...c };
+    },
+
+    async guardarResidente(hogarId, { nombre, telefono }) {
+      await esperar();
+      const h = await hogarAutorizado(hogarId);
+      h.residente = { id: h.residente?.id ?? h.id, nombre, telefono };
+      // El nombre del hogar sale del residente ("Casa de Rosa"); se puede cambiar después.
+      if (h.nombre === 'Mi hogar') h.nombre = `Casa de ${nombre.split(' ')[0]}`;
     },
   };
 }

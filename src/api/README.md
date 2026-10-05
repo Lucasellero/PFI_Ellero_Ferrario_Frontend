@@ -15,6 +15,8 @@
 
 - **`mock`** (default): no necesita nada. Los eventos se generan relativos a la hora actual
   (siempre hay datos de "hoy"); marcar alertas como resueltas dura hasta recargar la app.
+  Simula también cuentas, kits y hogares para probar la vinculación por QR (ver abajo). El
+  familiar se identifica por el token falso `mock:<email>` que arma `AuthProvider`.
 - **`http`**: pega contra `EXPO_PUBLIC_API_URL`. Desde el celular con Expo Go, la URL tiene que
   ser la **IP de la PC en la red local** (no `localhost`), y el backend se levanta con
   `uvicorn main:app --host 0.0.0.0`. **Hoy no sirve todavía de punta a punta**: el backend no
@@ -31,7 +33,30 @@
 | `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` (propuesto) | ❌ **Falta.** Necesita exponer la línea base de `baseline/` |
 | — | campo `ubicacion` en `EventoOut` | ❌ **Falta.** Join con `Camara.ubicacion`; la app lo muestra si viene |
 | — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ❌ **Falta.** Hoy la app pide los últimos 200 y filtra local |
-| — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño ya escrito en `cloud/README.md` → "Cómo seguir" punto 3 |
+| — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño en `cloud/README.md` → "Cómo seguir" punto 3; la app propone una tabla `DISPOSITIVO_FAMILIAR` (ver `docs/vinculacion-kit.md`) |
+| `crearPerfil` | `POST /me` | ❌ **Falta.** Crea el `Familiar` al registrarse |
+| `vincularKit` | `POST /kits/vincular` | ❌ **Falta.** Necesita la tabla nueva `KIT` |
+| `listarCamaras` | `GET /hogares/{id}/camaras` | ❌ **Falta** (hoy solo existe el alta desde la controladora) |
+| `actualizarCamara` | `PATCH /hogares/{id}/camaras/{camara_id}` | ❌ **Falta** |
+| `guardarResidente` | `PUT /hogares/{id}/residente` | ❌ **Falta.** Implica sumar `telefono` a `Residente` |
+
+**Vinculación del kit:** contrato completo (bodies, respuestas, errores 404/409/429, qué hace
+cada endpoint y seguridad) y cambios a la base de datos en
+[`docs/vinculacion-kit.md`](../../docs/vinculacion-kit.md). `GET /me` además tiene que traer
+`residente: null` mientras falta la configuración inicial, y
+`kit: { numero_serie, cantidad_camaras }` (plan de 1 a 3 cámaras que viene de fábrica).
+
+### Datos de prueba de la vinculación (mock)
+
+| Serie | Código | Para probar |
+|---|---|---|
+| LR-000124 | `4HDW-8R2N` | Plan de 1 cámara: el paso 3 pide una sola ubicación |
+| LR-000125 | `M2VC-5ZKA` | Plan de 2 cámaras |
+| LR-000123 | `7K3P-9QXM` | Plan de 3 cámaras (el máximo) |
+| LR-000101 | `Q9TB-6XJV` | Ya vinculado a la cuenta demo → error "ya vinculado" |
+
+Después de 5 códigos inexistentes seguidos el mock responde 429 (demasiados intentos), como
+debería hacer el backend.
 
 ### Forma propuesta de lo que falta
 
@@ -41,7 +66,8 @@
   "familiar": { "id": 1, "nombre": "Ana Gómez", "email": "ana@mail.com" },
   "hogares": [{
     "id": 1, "nombre": "Casa de Rosa", "rol": "responsable_principal",
-    "residente": { "id": 1, "nombre": "Rosa Méndez", "telefono": "+54911..." }
+    "residente": { "id": 1, "nombre": "Rosa Méndez", "telefono": "+54911..." },  // null = sin configurar
+    "kit": { "numero_serie": "LR-000101" }
   }]
 }
 // Implica sumar `telefono` (nullable) a `Residente` en el backend — lo usa "Llamar a Rosa".

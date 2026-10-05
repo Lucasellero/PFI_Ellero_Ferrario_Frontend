@@ -17,6 +17,8 @@ Pestaña Reportes. Cubre **RF9** (reportes periódicos del estado y la rutina) a
   período, con la misma `EventoCard` del home. Si no hay, una tarjeta verde "Sin alertas ni
   desvíos en el período". Tocar una tarjeta abre el mismo detalle que en Notificaciones
   (`features/eventos/DetalleAlertaSheet.tsx`), desde donde también se puede marcar como resuelta.
+- **Hogar recién vinculado**: si la línea base todavía no tiene datos (`indicadores: []`), en
+  vez de la tarjeta vacía se explica que "Lares está aprendiendo la rutina" de los primeros días.
 
 ## Estado
 

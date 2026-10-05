@@ -1,8 +1,9 @@
 # `features/hogar/` — Estado compartido del hogar
 
-`HogarProvider` carga una vez el **perfil** del familiar (quién es, a qué hogar accede, quién es
-el residente) y los **eventos** de ese hogar, y los comparte con todas las pestañas vía
-`useHogar()`.
+`HogarProvider` carga los **eventos** del hogar y los comparte con todas las pestañas vía
+`useHogar()`, junto con el **perfil** y el hogar activo, que toma de `CuentaProvider`
+(`features/cuenta/`: el perfil se carga antes, porque decide si mostrar las pestañas o la
+vinculación del kit).
 
 ```ts
 const { perfil, hogar, eventos, cargando, error, recargar, marcarResuelta } = useHogar();
@@ -18,7 +19,7 @@ const { refrescando, onRefrescar } = useRecargaManual(); // "tirar para actualiz
 
 ## Decisiones
 
-- **Un solo hogar activo** (`perfil.hogares[0]`). El modelo del backend permite que un familiar
+- **Un solo hogar activo** (el primero ya configurado, `hogarActivo` de `CuentaProvider`). El modelo del backend permite que un familiar
   esté en varios hogares (N:M), pero no hay caso de uso todavía; cuando lo haya, sumar un
   selector en Perfil y guardar el hogar elegido acá.
 - **`marcarResuelta` es optimista:** se marca en pantalla al instante y se revierte si el backend

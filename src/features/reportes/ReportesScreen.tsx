@@ -94,6 +94,13 @@ export function ReportesScreen() {
           <Text style={typography.secundario}>Comparado con lo habitual de {residente}</Text>
           {!resumen && !errorResumen && <ActivityIndicator color={colors.acento} style={styles.cargando} />}
           {errorResumen && <Text style={[typography.secundario, styles.aviso]}>{errorResumen}</Text>}
+          {resumen && resumen.indicadores.length === 0 && (
+            // Hogar recién vinculado: la línea base (RF6) necesita algunos días de datos.
+            <Text style={[typography.secundario, styles.aprendiendo]}>
+              Lares está aprendiendo la rutina de {residente}. En los primeros días vas a ver acá
+              cuándo se levanta, come o descansa comparado con lo habitual.
+            </Text>
+          )}
           {resumen?.indicadores.map((ind) => {
             const ok = ind.estado === 'ok';
             return (
@@ -169,6 +176,10 @@ const crearEstilos = ({ colors }: Tema) => StyleSheet.create({
   aviso: {
     marginTop: spacing.md,
     color: colors.moderadaTexto,
+  },
+  aprendiendo: {
+    marginTop: spacing.md,
+    lineHeight: 20,
   },
   indicador: {
     flexDirection: 'row',
