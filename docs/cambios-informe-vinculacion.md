@@ -34,8 +34,8 @@
 ## Qué se decidió (resumen para tener contexto)
 
 - **Instalación "enchufar y listo".** El kit viene preconfigurado de fábrica. La controladora
-  no necesita monitor, teclado ni mouse. Se conecta a internet **con un cable de red al router**,
-  que viene en la caja. Las cámaras se conectan a una **red wifi privada que arma la propia
+  no necesita monitor, teclado ni mouse. Se conecta a internet **con un cable de red al router**
+  de la casa; el cable **no está incluido en el kit**, lo aporta el familiar. Las cámaras se conectan a una **red wifi privada que arma la propia
   controladora** y vienen configuradas de fábrica para usar solo esa red, por lo que **no tienen
   salida a internet**. El software arranca solo al encender la controladora, también después
   de un corte de luz.
@@ -75,10 +75,22 @@ Prioridad: **[A]** hacer, **[B]** recomendado, **[C]** consultar con Lucas antes
 
 ### Cap. 3 · 3.3 Mockups
 
-- **[B]** Una o dos oraciones al final: además de las pantallas del mockup, la app tiene el
-  alta de cuenta y la vinculación del kit (escanear el QR, datos del residente y ubicación de
-  cámaras), que siguen el mismo lenguaje visual. **No** agregar figuras nuevas (no hay mockup
-  de esas pantallas).
+- **[A] Figuras nuevas.** Ya están hechas en el repo del Frontend, en
+  `docs/informe/imagenes/`, con el nombre final (mismo estilo que las Figuras 3.1 y 3.2):
+  - `Mockup_Mobile_Flujo3.png`: crear cuenta (06), vinculá tu kit (07) y escanear el QR (08).
+  - `Mockup_Mobile_Flujo4.png`: código a mano (09), residente (10), ubicación de la cámara
+    según el plan (11) y perfil (12).
+  Copiarlas tal cual a `Imagenes/` del informe e incluirlas con el mismo formato de figura que las existentes,
+  con un párrafo para cada una en el tono de la sección: qué resuelve cada pantalla y qué
+  requerimiento cubre (RF12 y RNF10 para la cuenta y la vinculación, RF10 para la ubicación de
+  cámaras, RNF8 para la simplicidad). Puntos a destacar: la validación en vivo del alta de
+  cuenta, el QR como forma de instalar sin ayuda técnica, la alternativa del código a mano, el
+  plan del kit que fija cuántas cámaras se configuran, y el consejo de apuntar la cámara del
+  baño a la puerta (sale de las entrevistas, Sección 3.1.2.2).
+- **[C] Modo oscuro.** En la misma carpeta están `Mockup_Mobile_Oscuro1.png` (01 a 05),
+  `Mockup_Mobile_Oscuro2.png` (06 a 08) y `Mockup_Mobile_Oscuro3.png` (09 a 12). Consultar con
+  Lucas si se incluye alguna (por ejemplo solo `Oscuro1`, con una oración sobre el modo oscuro)
+  o si quedan fuera del informe.
 
 ### Cap. 3 · 3.4.1 Diagrama de Casos de Uso
 
@@ -128,7 +140,8 @@ Prioridad: **[A]** hacer, **[B]** recomendado, **[C]** consultar con Lucas antes
 ### Cap. 3 · 3.8 Viabilidad Técnica
 
 - **[A]** El párrafo final ("el kit se entrega armado y preconfigurado...") ampliarlo con la
-  instalación concreta: cable de red incluido, sin monitor, cámaras ya emparejadas con la
+  instalación concreta: conexión al router con un cable de red (no incluido en el kit), sin
+  monitor, cámaras ya emparejadas con la
   controladora, arranque automático, luz de estado y vinculación escaneando el QR desde la app.
   El kit trae definida de fábrica la cantidad de cámaras del plan (1 a 3), que coincide con el
   máximo de tres por controladora que ya plantea esta sección (RNF9); al vincularlo, el familiar
@@ -136,9 +149,9 @@ Prioridad: **[A]** hacer, **[B]** recomendado, **[C]** consultar con Lucas antes
 - **[A]** Reforzar el argumento de privacidad que ya está en esta sección (cámaras domésticas
   que mandan video a la nube del fabricante): con la red privada, las cámaras del kit no tienen
   salida a internet.
-- **[C] Presupuesto (Tabla 3.III).** Suma el cable de red y, si el wifi de la Raspberry no
-  alcanza para las 3 cámaras, un adaptador wifi USB. **No cambiar números sin preguntarle a
-  Lucas**: el costo del kit alimenta el modelo financiero de la Sección 3.9 (escenarios, VAN,
+- **[C] Presupuesto (Tabla 3.III).** El cable de red **no se suma** (no está incluido en el
+  kit). Lo único que podría sumarse es un adaptador wifi USB, si el wifi de la Raspberry no
+  alcanza para las 3 cámaras. **No cambiar números sin preguntarle a Lucas**: el costo del kit alimenta el modelo financiero de la Sección 3.9 (escenarios, VAN,
   TIR) y cualquier cambio arrastra esas cifras. Pedirle los precios.
 
 ### Cap. 3 · 3.10 Branding · Ecosistema de producto

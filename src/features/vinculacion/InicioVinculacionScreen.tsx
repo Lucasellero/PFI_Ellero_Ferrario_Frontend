@@ -13,7 +13,7 @@ import { radius, spacing, useEstilos, useTema, type Tema } from '@/theme';
 import { TOTAL_PASOS } from './VinculacionProvider';
 
 const INSTRUCCIONES = [
-  { icono: 'power', texto: 'Enchufá la controladora Lar y conectala al wifi de la casa.' },
+  { icono: 'power', texto: 'Enchufá la controladora Lar y conectala al router de tu casa con un cable de red.' },
   { icono: 'maximize', texto: 'Buscá la etiqueta con el código QR en la base de la controladora.' },
   { icono: 'smartphone', texto: 'Escaneala desde acá. Si no podés, tipeá el código que está debajo.' },
 ] as const;

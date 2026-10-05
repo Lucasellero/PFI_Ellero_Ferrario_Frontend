@@ -134,6 +134,8 @@ src/
 ├── theme/                Colores (claro y oscuro), espaciados, tipografía
 └── config/               Variables de entorno
 docs/                     Diseños que cruzan app y backend (ej. vinculacion-kit.md)
+├── mockups/              Mockups en HTML (estilo del informe), claros y oscuros, y sus PNG
+└── informe/              Material listo para el informe: imágenes con nombre final + índice
 ```
 
 **Regla de dependencias:** `app/` → `features/` → `components/`, `lib/`, `api/`, `theme/`. Una
@@ -322,7 +324,7 @@ Verificado `typecheck`, `lint` y probado en un iPhone con Expo Go: el spinner ya
   compró, Sección 3.9.2.1 del informe) y la app solo deja ubicar esas. En la base de datos,
   `KIT.cantidad_camaras` y CAMARA ligada al KIT desde fábrica.
 - **Instalación sin configurar nada:** la controladora sale a internet por cable al router
-  (viene en la caja), sin monitor; las cámaras usan una red privada de la controladora sin
+  (el cable no está incluido en el kit, lo pone el familiar), sin monitor; las cámaras usan una red privada de la controladora sin
   salida a internet. Detalle en `docs/vinculacion-kit.md`, sección 2.
 - **Teléfono solo de Argentina**, guardado en formato internacional; celular o fijo según el 9 o
   el 15.

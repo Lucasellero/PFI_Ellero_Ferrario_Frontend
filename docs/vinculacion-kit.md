@@ -66,7 +66,7 @@ controladora ni en las cámaras.
 | Pregunta | Respuesta |
 |---|---|
 | ¿Hace falta monitor, teclado o mouse? | **No.** La controladora (Lar) corre sin pantalla, con el sistema y el software instalados de fábrica. |
-| ¿Cómo se conecta a internet? | **Con el cable de red que viene en la caja**, de la controladora al router de la casa. Sin contraseñas ni configuración. |
+| ¿Cómo se conecta a internet? | **Con un cable de red** de la controladora al router de la casa. Sin contraseñas ni configuración. El cable **no viene en el kit**: lo pone el familiar (la mayoría de los routers traen uno). |
 | ¿Cómo se conectan las cámaras? | A una **red wifi privada que arma la propia controladora**. Las cámaras (Vela) vienen configuradas de fábrica para conectarse solo a esa red. |
 | ¿Cómo se "levanta" el sistema? | Solo. El runner y el panel local arrancan al encender la controladora (servicios de `systemd`) y vuelven a arrancar después de un corte de luz. |
 | ¿Y el panel de control local? | Es una herramienta técnica (equipo, soporte). Se abre desde un navegador en la red de la casa, en una dirección fija tipo `http://lar.local` (mDNS). El familiar hace todo desde la app. |
