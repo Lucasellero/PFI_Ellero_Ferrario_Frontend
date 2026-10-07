@@ -1,21 +1,18 @@
 /**
- * Pestañas de la app logueada (Notificaciones / Reportes / Perfil). `HogarProvider` vive acá:
- * se monta al iniciar sesión y se descarta al cerrarla, así no quedan datos de otra cuenta.
+ * Pestañas de la app logueada (Notificaciones / Reportes / Perfil). `HogarProvider` vive en
+ * `(app)/_layout.tsx`, un nivel arriba: lo necesitan también `editar-residente`/`editar-camaras`/
+ * `familiares`, que se empujan desde Perfil pero no son pestañas (ver ese layout).
  */
 import Feather from '@expo/vector-icons/Feather';
 import { Tabs } from 'expo-router';
 
 import { esVisibleEnFeed } from '@/features/eventos/presentacion';
 import { requiereAtencion } from '@/features/eventos/severidad';
-import { HogarProvider, useHogar } from '@/features/hogar/HogarProvider';
+import { useHogar } from '@/features/hogar/HogarProvider';
 import { useTema } from '@/theme';
 
 export default function TabsLayout() {
-  return (
-    <HogarProvider>
-      <Pestanas />
-    </HogarProvider>
-  );
+  return <Pestanas />;
 }
 
 function Pestanas() {

@@ -45,7 +45,7 @@ function Navegacion() {
       <StatusBar style={esquema === 'oscuro' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.fondo } }}>
         <Stack.Protected guard={etapa === 'lista'}>
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(app)" />
         </Stack.Protected>
         <Stack.Protected guard={enVinculacion}>
           <Stack.Screen name="vinculacion" />

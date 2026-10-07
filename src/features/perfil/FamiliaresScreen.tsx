@@ -140,38 +140,44 @@ export function FamiliaresScreen() {
                   {f.nombre}
                   {f.id === miId ? ' (vos)' : ''}
                 </Text>
-                <Text style={typography.secundario}>{f.email}</Text>
+                <Text style={typography.secundario} numberOfLines={1} ellipsizeMode="tail">
+                  {f.email}
+                </Text>
               </View>
 
-              {soyResponsable && f.id !== miId ? (
-                <Pressable
-                  onPress={() =>
-                    onCambiarRol(f, f.rol === 'responsable_principal' ? 'familiar' : 'responsable_principal')
-                  }
-                  disabled={ocupado === f.id}
-                  accessibilityRole="button"
-                  style={styles.rolBoton}>
-                  {ocupado === f.id ? (
-                    <ActivityIndicator color={colors.acento} />
-                  ) : (
-                    <Text style={styles.rolBotonTexto}>{ROL_LABEL[f.rol] ?? f.rol}</Text>
-                  )}
-                </Pressable>
-              ) : (
-                <Text style={typography.pequeno}>{ROL_LABEL[f.rol] ?? f.rol}</Text>
-              )}
+              <View style={styles.filaAcciones}>
+                {soyResponsable && f.id !== miId ? (
+                  <Pressable
+                    onPress={() =>
+                      onCambiarRol(f, f.rol === 'responsable_principal' ? 'familiar' : 'responsable_principal')
+                    }
+                    disabled={ocupado === f.id}
+                    accessibilityRole="button"
+                    style={styles.rolBoton}>
+                    {ocupado === f.id ? (
+                      <ActivityIndicator color={colors.acento} />
+                    ) : (
+                      <Text style={styles.rolBotonTexto} numberOfLines={1}>
+                        {ROL_LABEL[f.rol] ?? f.rol}
+                      </Text>
+                    )}
+                  </Pressable>
+                ) : (
+                  <Text style={typography.pequeno}>{ROL_LABEL[f.rol] ?? f.rol}</Text>
+                )}
 
-              {(soyResponsable || f.id === miId) && (
-                <Pressable
-                  onPress={() => onQuitar(f)}
-                  disabled={ocupado === f.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={f.id === miId ? 'Salir del hogar' : `Desvincular a ${f.nombre}`}
-                  hitSlop={8}
-                  style={styles.quitar}>
-                  <Feather name={f.id === miId ? 'log-out' : 'x'} size={18} color={colors.urgenteTexto} />
-                </Pressable>
-              )}
+                {(soyResponsable || f.id === miId) && (
+                  <Pressable
+                    onPress={() => onQuitar(f)}
+                    disabled={ocupado === f.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={f.id === miId ? 'Salir del hogar' : `Desvincular a ${f.nombre}`}
+                    hitSlop={8}
+                    style={styles.quitar}>
+                    <Feather name={f.id === miId ? 'log-out' : 'x'} size={18} color={colors.urgenteTexto} />
+                  </Pressable>
+                )}
+              </View>
             </View>
           ))}
         </View>
@@ -241,8 +247,10 @@ const crearEstilos = ({ colors }: Tema) =>
     },
     fila: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       alignItems: 'center',
-      gap: spacing.md,
+      rowGap: spacing.sm,
+      columnGap: spacing.md,
       padding: spacing.lg,
     },
     filaBorde: {
@@ -250,8 +258,15 @@ const crearEstilos = ({ colors }: Tema) =>
       borderBottomColor: colors.borde,
     },
     filaTextos: {
-      flex: 1,
+      flexGrow: 1,
+      flexBasis: 160,
       gap: 2,
+    },
+    filaAcciones: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginLeft: 'auto',
     },
     rolBoton: {
       paddingHorizontal: spacing.md,

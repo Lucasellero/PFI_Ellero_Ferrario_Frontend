@@ -14,8 +14,10 @@ const { refrescando, onRefrescar } = useRecargaManual(); // "tirar para actualiz
 
 - Notificaciones, el badge de la pestaña y Reportes usan **la misma lista** de eventos: se pide
   una vez y no se desincronizan (si marcás una alerta como resuelta, el badge baja al instante).
-- Se monta en `src/app/(tabs)/_layout.tsx`, o sea **solo con sesión iniciada**: al cerrar sesión
-  se descarta y no quedan datos de otra cuenta en memoria.
+- Se monta en `src/app/(app)/_layout.tsx` (2026-10-07: subió un nivel desde `(tabs)/_layout.tsx`
+  para que `editar-residente`/`editar-camaras`/`familiares` — empujadas desde Perfil, no son
+  pestañas — también puedan usar `useHogar()`), o sea **solo con sesión iniciada**: al cerrar
+  sesión se descarta y no quedan datos de otra cuenta en memoria.
 
 ## Decisiones
 
