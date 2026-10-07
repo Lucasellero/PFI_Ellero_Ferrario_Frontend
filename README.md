@@ -500,17 +500,26 @@ layout raíz pase solo a la vinculación con el perfil ya actualizado.
 **Pendiente:** probar las tres pantallas desde la app en un celular; preferencias de
 notificación; selector de hogar (si un familiar llega a tener más de uno).
 
+### 2026-10-07 — Actualizar Node
+
+**Qué se hizo:** `winget install OpenJS.NodeJS.LTS` → Node `v24.19.0` (antes `20.17.0`, por
+debajo del mínimo de React Native 0.86). Ya no sale el aviso "Node.js is outdated and
+unsupported" al correr `typecheck`/`lint`/`expo export`. No hizo falta reinstalar
+`node_modules` ni cambió nada de comportamiento — verificado `npm run typecheck` y
+`npm run lint` sin errores con la versión nueva.
+
 ---
 
 ## Próximos pasos
 
 En orden sugerido:
 
-1. **Actualizar Node a 22 LTS** y **probar la app en los celulares** de los dos con Expo Go,
-   con `EXPO_PUBLIC_API_MODE=http` y `EXPO_PUBLIC_AUTH_MODE=firebase` contra el backend real;
-   ajustar detalles visuales contra los mockups. Esto cubriría de una las tres pantallas nuevas
-   de Perfil (editar residente/cámaras, familiares) y el login real, ninguno probado todavía en
-   un celular.
+1. ~~Actualizar Node~~ ✅ (2026-10-07, `v24.19.0` vía `winget install OpenJS.NodeJS.LTS` — ya
+   no hace falta exactamente "22", alcanza con cualquier LTS ≥20.19.4). **Probar la app en los
+   celulares** de los dos con Expo Go, con `EXPO_PUBLIC_API_MODE=http` y
+   `EXPO_PUBLIC_AUTH_MODE=firebase` contra el backend real; ajustar detalles visuales contra los
+   mockups. Esto cubriría de una las tres pantallas nuevas de Perfil (editar residente/cámaras,
+   familiares) y el login real, ninguno probado todavía en un celular.
 2. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
    rutina y en caídas/inmovilidad (`cloud/README.md` → punto 3, 2026-10-07). Falta: pasar a
    *development build* (no anda en Expo Go), registrar el token del celular al loguearse y
