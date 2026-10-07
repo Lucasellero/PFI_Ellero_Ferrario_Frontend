@@ -41,7 +41,7 @@
 | — | campo `ubicacion` en `EventoOut` | ✅ Existe (2026-10-07). Join con `Camara.ubicacion`, `null` si no vino de una cámara o no se cargó |
 | — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend (2026-10-07). **La app todavía no los usa** — sigue pidiendo los últimos 200 y filtrando local |
 | `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo 2 indicadores (`comida`, `sedentarismo`) calculados al vuelo sobre `Evento` — ver `cloud/app/rutina.py`. Sin `"despertar"`: no hay clase de cámara que lo detecte |
-| — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño en `cloud/README.md` → "Cómo seguir" punto 3; decidido: columna `push_token` (null) en `Familiar` (ver `docs/vinculacion-kit.md`) |
+| — | `POST /me/push-token` (RF8) | ✅ Existe en el backend (2026-10-07, body `{token}`, 204). **La app todavía no lo llama ni recibe push**: requiere *development build* para obtener un token de FCM real — no anda en Expo Go (ver `features/auth/README.md`, "Si se pasa a development build") |
 
 **Vinculación del kit:** contrato completo (bodies, respuestas, errores 404/409/429, qué hace
 cada endpoint y seguridad) y cambios a la base de datos en

@@ -24,7 +24,7 @@ del residente.
 | Pantallas de los mockups (Login, Notificaciones, Detalle de alerta, Reportes, Día en orden) + Perfil | ✅ Hechas, con datos de prueba |
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
-| Notificaciones push (Firebase Cloud Messaging) | ⏳ Pendiente — requiere *development build* (no anda en Expo Go) |
+| Notificaciones push (Firebase Cloud Messaging) | ⏳ Backend listo (`POST /me/push-token`, push en desvíos y en caídas/inmovilidad) — falta todo del lado de la app, requiere *development build* (no anda en Expo Go) |
 | Conexión al backend real | ✅ Los 8 métodos de `Api` implementados en `http.ts` (2026-10-07); falta mandar los filtros RF13 al pedir eventos (ver [`src/api/README.md`](src/api/README.md)) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
@@ -440,6 +440,22 @@ backend.
 **Pendiente:** push tokens (backend); mandar los filtros RF13 al pedir eventos del período;
 probar el resumen de rutina con datos de cámara reales y desde la app en un celular.
 
+### 2026-10-07 — Push tokens y alertas agudas en el backend (RF8)
+
+**Qué se hizo** (todo del lado del Backend, `cloud/` — nada cambia en este repo todavía):
+`POST /me/push-token` (body `{token}`, 204), `baseline_runner.py` manda los desvíos de rutina a
+los tokens reales de cada familiar (ya no una lista vacía), y `POST /devices/events` ahora
+también dispara push en el momento para `fall`/`immobility` con `es_alerta=True` — decisión
+tomada explícitamente (RF8 lo sugería, el README del Backend lo dejaba como punto a discutir):
+sí avisa de inmediato por caídas/inmovilidad, no solo al otro día con el resumen de rutina.
+Probado con smoke tests (Firebase capturado en vez de real).
+
+**Por qué no cambia nada acá todavía:** registrar el token de FCM y recibir la notificación
+necesita el SDK nativo de Firebase Messaging, que no corre en Expo Go — requiere
+*development build* (ver "Próximos pasos"). Mientras tanto no hay nada que la app pueda llamar
+de forma útil (sin token real que mandar), así que queda documentado en
+[`src/api/README.md`](src/api/README.md) para cuando se pase a development build.
+
 ---
 
 ## Próximos pasos
@@ -451,9 +467,10 @@ En orden sugerido:
    ajustar detalles visuales contra los mockups.
 2. **App: mandar los filtros RF13** (`tipo`/`desde`/`hasta`, ya existen en el backend) al pedir
    eventos, en vez de pedir los últimos 200 y filtrar local (ver [`src/api/README.md`](src/api/README.md)).
-3. **Push (RF8):** sumar `POST /me/push-token` en el backend (`cloud/README.md` → punto 3),
-   pasar a *development build*, registrar el token del celular y abrir el detalle de la alerta
-   al tocar la notificación.
+3. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
+   rutina y en caídas/inmovilidad (`cloud/README.md` → punto 3, 2026-10-07). Falta: pasar a
+   *development build* (no anda en Expo Go), registrar el token del celular al loguearse y
+   abrir el detalle de la alerta al tocar la notificación.
 4. **App:** editar residente y cámaras desde Perfil e invitar familiares que ya tienen cuenta
    (RF12).
 5. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
