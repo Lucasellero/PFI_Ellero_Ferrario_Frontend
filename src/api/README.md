@@ -37,10 +37,10 @@
 | `listarCamaras` | `GET /hogares/{id}/camaras` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
 | `actualizarCamara` | `PATCH /hogares/{id}/camaras/{camara_id}` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
 | `guardarResidente` | `PUT /hogares/{id}/residente` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
-| `marcarResuelta` | `POST /hogares/{id}/eventos/{evento_id}/resolver` (propuesto) | ❌ **Falta.** Tampoco existe la columna en `Evento` |
-| `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` (propuesto) | ❌ **Falta.** Necesita exponer la línea base de `baseline/` |
-| — | campo `ubicacion` en `EventoOut` | ❌ **Falta.** Join con `Camara.ubicacion`; la app lo muestra si viene |
-| — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ❌ **Falta.** Hoy la app pide los últimos 200 y filtra local |
+| `marcarResuelta` | `POST /hogares/{id}/eventos/{evento_id}/resolver` | ✅ Existe e implementado en `http.ts` (2026-10-07). Cualquier familiar vinculado, idempotente |
+| — | campo `ubicacion` en `EventoOut` | ✅ Existe (2026-10-07). Join con `Camara.ubicacion`, `null` si no vino de una cámara o no se cargó |
+| — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend (2026-10-07). **La app todavía no los usa** — sigue pidiendo los últimos 200 y filtrando local |
+| `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` (propuesto) | ❌ **Falta.** Necesita exponer la línea base de `baseline/` — `LineaBaseComportamiento` existe en el modelo pero `baseline_runner.py` todavía no la escribe |
 | — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño en `cloud/README.md` → "Cómo seguir" punto 3; decidido: columna `push_token` (null) en `Familiar` (ver `docs/vinculacion-kit.md`) |
 
 **Vinculación del kit:** contrato completo (bodies, respuestas, errores 404/409/429, qué hace
@@ -94,7 +94,9 @@ backend porque es el que conoce la línea base; si se prefiere mandar números c
 
 ## Pendiente
 
-- `marcarResuelta` y `obtenerResumenRutina` en `http.ts`: siguen en `pendiente(...)` (`ApiError`
-  501) hasta que el backend tenga esos endpoints.
+- `obtenerResumenRutina` en `http.ts`: sigue en `pendiente(...)` (`ApiError` 501) hasta que el
+  backend escriba la línea base.
+- Pasar `listarEventos` a mandar los filtros `tipo`/`desde`/`hasta` que ya acepta el backend
+  (RF13) en vez de pedir los últimos 200 y filtrar del lado del cliente.
 - Probar el modo `http` desde la app en un celular (hoy solo probado con `TestClient` del lado
   del backend).

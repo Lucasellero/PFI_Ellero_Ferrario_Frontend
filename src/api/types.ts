@@ -88,10 +88,11 @@ export interface Evento {
   occurred_at: string;
   es_alerta: boolean;
   metadata: EventoMetadata;
-  /** PENDIENTE BACKEND: ubicación de la cámara (`Camara.ubicacion`), ej. "Living". */
-  ubicacion?: string | null;
-  /** PENDIENTE BACKEND: estado de atención de la alerta (no existe en el modelo `Evento`). */
-  resuelta?: boolean;
+  /** Ubicación de la cámara (`Camara.ubicacion`), ej. "Living". Null si el evento no vino de una
+   * cámara (ej. `routine_deviation`) o la cámara todavía no tiene ubicación cargada. */
+  ubicacion: string | null;
+  /** Si ya se tocó "Marcar como resuelta" (RF8, mockup 03). */
+  resuelta: boolean;
 }
 
 /** `GET /me`: quién es el familiar logueado y a qué hogares accede. */

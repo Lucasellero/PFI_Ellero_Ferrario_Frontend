@@ -25,7 +25,7 @@ del residente.
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
 | Notificaciones push (Firebase Cloud Messaging) | ⏳ Pendiente — requiere *development build* (no anda en Expo Go) |
-| Conexión al backend real | ✅ Endpoints de `GET /me` a `PUT /hogares/{id}/residente` implementados en `http.ts` (2026-10-07); faltan `marcarResuelta` y resumen de rutina (ver [`src/api/README.md`](src/api/README.md)) |
+| Conexión al backend real | ✅ Endpoints de `GET /me` a `marcarResuelta` implementados en `http.ts` (2026-10-07); falta el resumen de rutina y mandar los filtros RF13 (ver [`src/api/README.md`](src/api/README.md)) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
 | Crear cuenta + vinculación del kit por QR + configuración inicial (residente, cámaras) | ✅ Hecho en la app (mock y backend real) ([`docs/vinculacion-kit.md`](docs/vinculacion-kit.md)) |
@@ -389,8 +389,25 @@ invitar familiares (RF12).
   instalado antes de aplicar el workaround, no se adivinó.
 
 **Pendiente:** probar todo el flujo (login Firebase + vinculación + eventos) desde la app en un
-celular contra el backend real; `marcarResuelta`, resumen de rutina y push tokens (ver
-`src/api/README.md` y `cloud/README.md` del Backend).
+celular contra el backend real; resumen de rutina y push tokens (ver `src/api/README.md` y
+`cloud/README.md` del Backend).
+
+### 2026-10-07 — Resolver alertas, ubicación en eventos y filtros RF13
+
+**Qué se hizo**
+- **Backend (`cloud/`):** `POST /hogares/{id}/eventos/{evento_id}/resolver` ("Marcar como
+  resuelta", mockup 03), campo `ubicacion` en `EventoOut` (join con `Camara.ubicacion`) y
+  filtros opcionales `tipo`/`desde`/`hasta` en `GET /hogares/{id}/eventos` (RF13). Probado con
+  un smoke test contra SQLite (dependency override de Firebase) — resolver es idempotente, 404
+  si el evento no es de ese hogar, `ubicacion` null para eventos sin cámara.
+- **`src/api/http.ts`:** `marcarResuelta` deja de ser `pendiente(...)`.
+- **`src/api/types.ts`:** `Evento.ubicacion` y `Evento.resuelta` dejan de ser opcionales ni
+  `PENDIENTE BACKEND` — el backend siempre los manda ahora.
+- Verificado: `npm run typecheck` y `npm run lint` sin errores.
+
+**Pendiente:** la app todavía no manda los filtros `tipo`/`desde`/`hasta` al pedir eventos
+(sigue pidiendo los últimos 200 y filtrando local); resumen de rutina y push tokens siguen sin
+implementar en el backend.
 
 ---
 

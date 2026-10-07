@@ -36,7 +36,8 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
     crearPerfil: (datos) => request<Perfil>('/me', { method: 'POST', body: JSON.stringify(datos) }),
     listarEventos: (hogarId, { limit = 200 } = {}) =>
       request<Evento[]>(`/hogares/${hogarId}/eventos?limit=${limit}`),
-    marcarResuelta: async () => pendiente('marcar alerta como resuelta'),
+    marcarResuelta: (hogarId, eventoId) =>
+      request<void>(`/hogares/${hogarId}/eventos/${eventoId}/resolver`, { method: 'POST' }),
     obtenerResumenRutina: async () => pendiente('resumen de rutina'),
     // Vinculación del kit: contrato en docs/vinculacion-kit.md.
     vincularKit: (codigo) =>
