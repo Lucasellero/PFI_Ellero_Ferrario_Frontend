@@ -33,3 +33,13 @@ const { etapa, perfil, hogarActivo, hogarPendiente, recargarPerfil } = useCuenta
   `docs/vinculacion-kit.md`).
 - **La carga se muestra como capa encima del Stack**, no reemplazándolo: Expo Router necesita el
   navegador raíz siempre montado.
+- **Un 404 de `GET /me` no es `etapa='error'`** (2026-10-07, encontrado probando en un celular
+  real). `GET /me` da 404 "todavía no tiene perfil" hasta que `POST /me` crea el `Familiar` (ver
+  `routers/me.py`) — y justo después de crear la cuenta hay una carrera esperable: Firebase
+  avisa la sesión nueva (dispara el effect de acá) antes de que `registrarCuenta`
+  (`AuthProvider`) termine su propio `POST /me`. Sin manejarlo, ese 404 transitorio se mostraba
+  como "No pudimos cargar los datos" por medio segundo, cada vez que alguien creaba una cuenta.
+  Ahora reintenta calladito (hasta 4 veces, 500 ms entre intentos) antes de darlo por un error
+  real. Mismo criterio en `recargarPerfil()`: un 404 ahí es "todavía nadie te invitó" (botón
+  "Actualizar" de `features/vinculacion/README.md`), no un error — se queda esperando en la
+  misma pantalla.

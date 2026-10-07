@@ -10,9 +10,13 @@
  */
 import { createContext, use, useEffect, useState, type ReactNode } from 'react';
 
-import { api } from '@/api/client';
+import { ApiError, api } from '@/api/client';
 import type { HogarApi, HogarResumen, Perfil } from '@/api/types';
 import { useAuth } from '@/features/auth/AuthProvider';
+
+/** Cuántas veces reintentar un 404 recién logueado antes de darlo por un error real. */
+const REINTENTOS_SIN_PERFIL = 4;
+const ESPERA_REINTENTO_MS = 500;
 
 export type EtapaCuenta = 'sin-sesion' | 'cargando' | 'error' | 'sin-hogar' | 'configurando' | 'lista';
 
@@ -44,11 +48,31 @@ export function CuentaProvider({ children }: { children: ReactNode }) {
   const uid = usuario?.uid;
   useEffect(() => {
     if (!uid) return;
+    const uidActual = uid; // TS no angosta `uid` dentro de la función anidada de abajo
     let vigente = true;
-    api
-      .obtenerPerfil()
-      .then((perfil) => vigente && setResultado({ uid, perfil }))
-      .catch((e) => vigente && setResultado({ uid, error: mensaje(e) }));
+
+    // GET /me da 404 "todavía no tiene perfil" hasta que POST /me cree el Familiar (ver
+    // routers/me.py). Justo después de crear la cuenta hay una carrera esperable: Firebase avisa
+    // la sesión nueva (dispara este effect) antes de que termine el POST /me que arma
+    // `registrarCuenta` (AuthProvider) — sin este reintento, ese 404 transitorio se mostraba
+    // como "No pudimos cargar los datos" durante medio segundo (encontrado probando en un
+    // celular real, 2026-10-07). Reintenta calladito en vez de mostrar el error.
+    function intentar(vezNumero: number) {
+      api
+        .obtenerPerfil()
+        .then((perfil) => vigente && setResultado({ uid: uidActual, perfil }))
+        .catch((e) => {
+          if (!vigente) return;
+          const todaviaSinPerfil = e instanceof ApiError && e.status === 404;
+          if (todaviaSinPerfil && vezNumero < REINTENTOS_SIN_PERFIL) {
+            setTimeout(() => vigente && intentar(vezNumero + 1), ESPERA_REINTENTO_MS);
+            return;
+          }
+          setResultado({ uid: uidActual, error: mensaje(e) });
+        });
+    }
+    intentar(0);
+
     return () => {
       vigente = false;
     };
@@ -78,6 +102,10 @@ export function CuentaProvider({ children }: { children: ReactNode }) {
       try {
         setResultado({ uid, perfil: await api.obtenerPerfil() });
       } catch (e) {
+        // 404 acá es "todavía nadie te invitó" (botón "Actualizar" de la pantalla de espera,
+        // features/vinculacion/README.md) — no es un error real, se queda esperando en la misma
+        // pantalla en vez de mostrar "No pudimos cargar los datos".
+        if (e instanceof ApiError && e.status === 404) return;
         setResultado({ uid, error: mensaje(e) });
       }
     },
