@@ -295,10 +295,13 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
       return perfilDe(nuevo);
     },
 
-    async listarEventos(hogarId, { limit = 200 } = {}) {
+    async listarEventos(hogarId, { limit = 200, tipo, desde, hasta } = {}) {
       await esperar();
       const h = await hogarAutorizado(hogarId);
-      return [...h.eventos]
+      return h.eventos
+        .filter((e) => !tipo || e.event_type === tipo)
+        .filter((e) => !desde || e.occurred_at >= desde)
+        .filter((e) => !hasta || e.occurred_at <= hasta)
         .sort((a, b) => b.occurred_at.localeCompare(a.occurred_at))
         .slice(0, limit)
         .map((e) => ({ ...e }));

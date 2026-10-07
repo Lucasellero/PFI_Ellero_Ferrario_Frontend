@@ -25,7 +25,7 @@ del residente.
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
 | Notificaciones push (Firebase Cloud Messaging) | ⏳ Backend listo (`POST /me/push-token`, push en desvíos y en caídas/inmovilidad) — falta todo del lado de la app, requiere *development build* (no anda en Expo Go) |
-| Conexión al backend real | ✅ Los 8 métodos de `Api` implementados en `http.ts` (2026-10-07); falta mandar los filtros RF13 al pedir eventos (ver [`src/api/README.md`](src/api/README.md)) |
+| Conexión al backend real | ✅ Los 8 métodos de `Api` implementados en `http.ts`, filtros RF13 conectados en Reportes (2026-10-07) — ver [`src/api/README.md`](src/api/README.md) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
 | Crear cuenta + vinculación del kit por QR + configuración inicial (residente, cámaras) | ✅ Hecho en la app (mock y backend real) ([`docs/vinculacion-kit.md`](docs/vinculacion-kit.md)) |
@@ -437,8 +437,8 @@ backend.
 - **Umbrales sin calibrar con datos reales de cámara** (no existen aún, mismo disclaimer que el
   resto de `baseline/`): punto de partida razonable, no un resultado medido.
 
-**Pendiente:** push tokens (backend); mandar los filtros RF13 al pedir eventos del período;
-probar el resumen de rutina con datos de cámara reales y desde la app en un celular.
+**Pendiente:** push tokens (backend); probar el resumen de rutina con datos de cámara reales y
+desde la app en un celular.
 
 ### 2026-10-07 — Push tokens y alertas agudas en el backend (RF8)
 
@@ -456,6 +456,22 @@ necesita el SDK nativo de Firebase Messaging, que no corre en Expo Go — requie
 de forma útil (sin token real que mandar), así que queda documentado en
 [`src/api/README.md`](src/api/README.md) para cuando se pase a development build.
 
+### 2026-10-07 — Filtros RF13 conectados en Reportes
+
+**Qué se hizo**
+- `Api.listarEventos` acepta `tipo`/`desde`/`hasta` además de `limit` (`client.ts`, `http.ts`
+  manda los que vengan como querystring, `mock.ts` los aplica también para que el modo mock se
+  comporte igual).
+- `ReportesScreen.tsx` pide los eventos del período con `desde` directo al backend
+  (`api.listarEventos(hogarId, { desde, limit: 500 })`) en vez de filtrar del lado del cliente
+  la lista general de `useHogar()` (capada a los últimos 200) — un hogar con mucha actividad
+  podía perder eventos viejos del mes en esa lista. La lista general (home, badge, "última
+  actividad" en el detalle) sigue sin filtro, como corresponde a un feed reciente.
+- Verificado: `npm run typecheck` y `npm run lint` sin errores.
+
+**Pendiente:** nadie manda `tipo`/`hasta` todavía (solo `desde`); evaluar si hace falta un
+filtro por tipo de evento en la UI de Reportes.
+
 ---
 
 ## Próximos pasos
@@ -465,13 +481,11 @@ En orden sugerido:
 1. **Actualizar Node a 22 LTS** y **probar la app en los celulares** de los dos con Expo Go,
    con `EXPO_PUBLIC_API_MODE=http` y `EXPO_PUBLIC_AUTH_MODE=firebase` contra el backend real;
    ajustar detalles visuales contra los mockups.
-2. **App: mandar los filtros RF13** (`tipo`/`desde`/`hasta`, ya existen en el backend) al pedir
-   eventos, en vez de pedir los últimos 200 y filtrar local (ver [`src/api/README.md`](src/api/README.md)).
+2. **App:** editar residente y cámaras desde Perfil e invitar/gestionar familiares (RF12) — el
+   backend ya tiene el CRUD completo (`cloud/README.md` → punto 4, 2026-10-07).
 3. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
    rutina y en caídas/inmovilidad (`cloud/README.md` → punto 3, 2026-10-07). Falta: pasar a
    *development build* (no anda en Expo Go), registrar el token del celular al loguearse y
    abrir el detalle de la alerta al tocar la notificación.
-4. **App:** editar residente y cámaras desde Perfil e invitar familiares que ya tienen cuenta
-   (RF12).
-5. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
+4. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

@@ -1,7 +1,8 @@
 # `features/reportes/` — Reportes de rutina
 
 Pestaña Reportes. Cubre **RF9** (reportes periódicos del estado y la rutina) apoyado en **RF6**
-(línea base), y **RF13** parcial (eventos del período). Mockup **04 · Reportes**.
+(línea base), y **RF13** (eventos del período, filtrados por fecha del lado del backend).
+Mockup **04 · Reportes**.
 
 | Archivo | Qué es |
 |---|---|
@@ -14,9 +15,13 @@ Pestaña Reportes. Cubre **RF9** (reportes periódicos del estado y la rutina) a
   `api.obtenerResumenRutina(hogarId, periodo)`. Lo "habitual" es la línea base **de ese
   residente** (no un umbral genérico), como pide el informe.
 - **Eventos del período**: alertas y desvíos (no actividades de rutina) desde el inicio del
-  período, con la misma `EventoCard` del home. Si no hay, una tarjeta verde "Sin alertas ni
-  desvíos en el período". Tocar una tarjeta abre el mismo detalle que en Notificaciones
-  (`features/eventos/DetalleAlertaSheet.tsx`), desde donde también se puede marcar como resuelta.
+  período, con la misma `EventoCard` del home. Pedidos aparte con `api.listarEventos(hogarId,
+  { desde, limit: 500 })` (RF13) — no son los mismos "últimos 200" que usa el home para la lista
+  general, así que un hogar con mucha actividad no pierde eventos viejos del mes. Si no hay, una
+  tarjeta verde "Sin alertas ni desvíos en el período". Tocar una tarjeta abre el mismo detalle
+  que en Notificaciones (`features/eventos/DetalleAlertaSheet.tsx`, que sí usa la lista general
+  del home para calcular la "última actividad normal"), desde donde también se puede marcar
+  como resuelta.
 - **Hogar recién vinculado**: si la línea base todavía no tiene datos (`indicadores: []`), en
   vez de la tarjeta vacía se explica que "Lares está aprendiendo la rutina" de los primeros días.
 
@@ -30,12 +35,13 @@ Pestaña Reportes. Cubre **RF9** (reportes periódicos del estado y la rutina) a
   cámara que detecte despertarse (sin sensor de cama), así que mostrarlo habría sido un dato
   inventado. Solo probado con un smoke test (eventos sintéticos contra SQLite) — sin probar con
   datos de cámara reales ni desde la app en un celular.
-- Los eventos del período siguen saliendo de la misma lista que el home (últimos 200) — el
-  backend ya tiene filtros `tipo`/`desde`/`hasta` (RF13) pero esta pantalla todavía no los manda.
+- **RF13 conectado (2026-10-07):** los eventos del período ya se piden con `desde` al backend
+  (`api.listarEventos(hogarId, { desde, limit: 500 })`), no filtrados de los últimos 200 de la
+  lista general del home.
 
 ## Pendiente
 
-- Mandar `desde`/`hasta` del período elegido al pedir eventos (RF13) en vez de filtrar los
-  últimos 200 del lado del cliente.
 - Probar el resumen de rutina con datos de cámara reales (no calibrado todavía, ver disclaimer
   en `cloud/app/rutina.py`) y desde la app en un celular.
+- `hasta`/`tipo` del contrato RF13 todavía no los usa ninguna pantalla (solo `desde`); evaluar si
+  hace falta un filtro por tipo de evento en la UI.

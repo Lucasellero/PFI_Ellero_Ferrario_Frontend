@@ -30,8 +30,13 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
   return {
     obtenerPerfil: () => request<Perfil>('/me'),
     crearPerfil: (datos) => request<Perfil>('/me', { method: 'POST', body: JSON.stringify(datos) }),
-    listarEventos: (hogarId, { limit = 200 } = {}) =>
-      request<Evento[]>(`/hogares/${hogarId}/eventos?limit=${limit}`),
+    listarEventos: (hogarId, { limit = 200, tipo, desde, hasta } = {}) => {
+      const params = new URLSearchParams({ limit: String(limit) });
+      if (tipo) params.set('tipo', tipo);
+      if (desde) params.set('desde', desde);
+      if (hasta) params.set('hasta', hasta);
+      return request<Evento[]>(`/hogares/${hogarId}/eventos?${params.toString()}`);
+    },
     marcarResuelta: (hogarId, eventoId) =>
       request<void>(`/hogares/${hogarId}/eventos/${eventoId}/resolver`, { method: 'POST' }),
     obtenerResumenRutina: (hogarId, periodo) =>

@@ -45,6 +45,9 @@ export function ReportesScreen() {
   // El resultado se guarda junto con el período que lo pidió: si no coincide con el período
   // elegido, todavía está cargando (así no hace falta "resetear" estado al cambiar de chip).
   const [resultado, setResultado] = useState<{ periodo: Periodo; resumen?: ResumenRutina; error?: string }>();
+  // RF13: eventos del período pedidos con `desde` al backend, no filtrados de los últimos 200
+  // del home — un hogar con mucha actividad podía perder eventos viejos del mes en esa lista.
+  const [eventosPeriodo, setEventosPeriodo] = useState<{ periodo: Periodo; eventos: Evento[] }>();
 
   const hogarId = hogar?.id;
   useEffect(() => {
@@ -54,6 +57,10 @@ export function ReportesScreen() {
       .obtenerResumenRutina(hogarId, periodo)
       .then((resumen) => vigente && setResultado({ periodo, resumen }))
       .catch((e: Error) => vigente && setResultado({ periodo, error: e.message }));
+    api
+      .listarEventos(hogarId, { limit: 500, desde: desde(periodo).toISOString() })
+      .then((nuevos) => vigente && setEventosPeriodo({ periodo, eventos: nuevos }))
+      .catch(() => {});
     return () => {
       vigente = false;
     };
@@ -69,10 +76,8 @@ export function ReportesScreen() {
 
   const config = PERIODOS.find((p) => p.valor === periodo)!;
   const residente = primerNombre(hogar.residente.nombre);
-  const inicio = desde(periodo);
-  const delPeriodo = eventos.filter(
-    (e) => esVisibleEnFeed(e) && severidadDe(e) !== 'rutina' && new Date(e.occurred_at) >= inicio,
-  );
+  const eventosDelPeriodo = eventosPeriodo?.periodo === periodo ? eventosPeriodo.eventos : [];
+  const delPeriodo = eventosDelPeriodo.filter((e) => esVisibleEnFeed(e) && severidadDe(e) !== 'rutina');
 
   return (
     <SafeAreaView style={styles.pantalla} edges={['top']}>

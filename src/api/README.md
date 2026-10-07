@@ -39,7 +39,7 @@
 | `guardarResidente` | `PUT /hogares/{id}/residente` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
 | `marcarResuelta` | `POST /hogares/{id}/eventos/{evento_id}/resolver` | ✅ Existe e implementado en `http.ts` (2026-10-07). Cualquier familiar vinculado, idempotente |
 | — | campo `ubicacion` en `EventoOut` | ✅ Existe (2026-10-07). Join con `Camara.ubicacion`, `null` si no vino de una cámara o no se cargó |
-| — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend (2026-10-07). **La app todavía no los usa** — sigue pidiendo los últimos 200 y filtrando local |
+| — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend y `listarEventos` ya los acepta (2026-10-07). `features/reportes` manda `desde` por período; nadie manda `tipo`/`hasta` todavía |
 | `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo 2 indicadores (`comida`, `sedentarismo`) calculados al vuelo sobre `Evento` — ver `cloud/app/rutina.py`. Sin `"despertar"`: no hay clase de cámara que lo detecte |
 | — | `POST /me/push-token` (RF8) | ✅ Existe en el backend (2026-10-07, body `{token}`, 204). **La app todavía no lo llama ni recibe push**: requiere *development build* para obtener un token de FCM real — no anda en Expo Go (ver `features/auth/README.md`, "Si se pasa a development build") |
 
@@ -95,7 +95,8 @@ backend porque es el que conoce la línea base; si se prefiere mandar números c
 ## Pendiente
 
 - `http.ts` ya implementa los 8 métodos de `Api` — no queda ningún `pendiente(...)`.
-- Pasar `listarEventos` a mandar los filtros `tipo`/`desde`/`hasta` que ya acepta el backend
-  (RF13) en vez de pedir los últimos 200 y filtrar del lado del cliente.
+- `listarEventos` ya acepta `tipo`/`desde`/`hasta` (RF13, usado por `features/reportes`); ningún
+  otro lugar los manda todavía (`features/hogar/HogarProvider.tsx` sigue pidiendo los últimos
+  200 sin filtro, que es lo que necesita el feed general).
 - Probar el modo `http` desde la app en un celular (hoy solo probado con `TestClient` del lado
   del backend).

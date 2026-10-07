@@ -6,7 +6,7 @@ import { API_MODE } from '@/config';
 
 import { crearHttpApi } from './http';
 import { crearMockApi } from './mock';
-import type { Camara, DatosResidente, Evento, KitVinculado, Perfil, Periodo, ResumenRutina } from './types';
+import type { Camara, DatosResidente, Evento, EventType, KitVinculado, Perfil, Periodo, ResumenRutina } from './types';
 
 /** Devuelve el ID token de Firebase del usuario logueado (en modo mock, un token de prueba). */
 export type TokenProvider = () => Promise<string | null>;
@@ -19,8 +19,12 @@ export interface Api {
    * `firebase_uid` y `email` del token; la app manda el nombre).
    */
   crearPerfil(datos: { nombre: string }): Promise<Perfil>;
-  /** `GET /hogares/{id}/eventos?limit=`. */
-  listarEventos(hogarId: number, opciones?: { limit?: number }): Promise<Evento[]>;
+  /** `GET /hogares/{id}/eventos?limit=&tipo=&desde=&hasta=` (RF13: `desde`/`hasta` ISO 8601,
+   * acotan por `occurred_at`; sin ellos, los últimos `limit`). */
+  listarEventos(
+    hogarId: number,
+    opciones?: { limit?: number; tipo?: EventType; desde?: string; hasta?: string },
+  ): Promise<Evento[]>;
   /** `POST /hogares/{id}/eventos/{evento_id}/resolver`. */
   marcarResuelta(hogarId: number, eventoId: number): Promise<void>;
   /** `GET /hogares/{id}/rutina?periodo=`: indicadores de rutina vs. historial del residente.
