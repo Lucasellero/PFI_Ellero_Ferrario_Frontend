@@ -25,10 +25,11 @@ del residente.
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
 | Notificaciones push (Firebase Cloud Messaging) | ⏳ Backend listo (`POST /me/push-token`, push en desvíos y en caídas/inmovilidad) — falta todo del lado de la app, requiere *development build* (no anda en Expo Go) |
-| Conexión al backend real | ✅ Los 8 métodos de `Api` implementados en `http.ts`, filtros RF13 conectados en Reportes (2026-10-07) — ver [`src/api/README.md`](src/api/README.md) |
+| Conexión al backend real | ✅ Los 12 métodos de `Api` implementados en `http.ts`, filtros RF13 conectados en Reportes (2026-10-07) — ver [`src/api/README.md`](src/api/README.md) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
 | Crear cuenta + vinculación del kit por QR + configuración inicial (residente, cámaras) | ✅ Hecho en la app (mock y backend real) ([`docs/vinculacion-kit.md`](docs/vinculacion-kit.md)) |
+| Editar residente/cámaras y gestión de familiares (RF12) desde Perfil | ✅ Hecho (2026-10-07) — ver [`src/features/perfil/README.md`](src/features/perfil/README.md) |
 | Validación de formularios (mail, contraseña, nombre, teléfono, código del kit) | ✅ Hecha ([`src/lib/README.md`](src/lib/README.md)) |
 
 ---
@@ -472,6 +473,33 @@ de forma útil (sin token real que mandar), así que queda documentado en
 **Pendiente:** nadie manda `tipo`/`hasta` todavía (solo `desde`); evaluar si hace falta un
 filtro por tipo de evento en la UI de Reportes.
 
+### 2026-10-07 — Editar residente/cámaras y gestión de familiares desde Perfil (RF12)
+
+**Qué se hizo**
+- `Api` suma `listarFamiliares`/`invitarFamiliar`/`cambiarRolFamiliar`/`quitarFamiliar`
+  (`client.ts`, `http.ts` contra el CRUD de `cloud/` del mismo día, `mock.ts` con la misma
+  lógica de "último `responsable_principal`" que el backend). Nuevo tipo `FamiliarVinculado`.
+  Nueva cuenta de prueba `EMAIL_FAMILIAR_DEMO` (`carlos.gomez@mail.com`) para poder probar
+  "invitar" en modo mock.
+- Tres pantallas nuevas en `features/perfil/` (`EditarResidenteScreen`, `EditarCamarasScreen`,
+  `FamiliaresScreen`) y sus rutas (`/editar-residente`, `/editar-camaras`, `/familiares`,
+  archivos finos en `src/app/` como el resto). `PerfilScreen` enlaza a las tres — las dos
+  primeras solo para `responsable_principal`.
+- `validarUbicaciones` (la regla de "sin repetirse entre cámaras del hogar") se movió de
+  `UbicacionCamarasScreen.tsx` a `src/lib/validaciones.ts`: la necesitan tanto la configuración
+  inicial como editar cámaras después, un solo lugar.
+- Verificado: `npm run typecheck`, `npm run lint` y `npx expo export` (Android y web) sin
+  errores — esto último confirma que las rutas nuevas bundlean y registran bien, más allá de lo
+  que ya cubre el typecheck. No se pudo probar interactuando con las pantallas (no hay celular
+  ni simulador en este entorno).
+
+**Decisiones:** ver `features/perfil/README.md` ("Decisiones (2026-10-07)") — en particular,
+desvincularse del único hogar llama `recargarPerfil()` en vez de `cerrarSesion()`, para que el
+layout raíz pase solo a la vinculación con el perfil ya actualizado.
+
+**Pendiente:** probar las tres pantallas desde la app en un celular; preferencias de
+notificación; selector de hogar (si un familiar llega a tener más de uno).
+
 ---
 
 ## Próximos pasos
@@ -480,12 +508,12 @@ En orden sugerido:
 
 1. **Actualizar Node a 22 LTS** y **probar la app en los celulares** de los dos con Expo Go,
    con `EXPO_PUBLIC_API_MODE=http` y `EXPO_PUBLIC_AUTH_MODE=firebase` contra el backend real;
-   ajustar detalles visuales contra los mockups.
-2. **App:** editar residente y cámaras desde Perfil e invitar/gestionar familiares (RF12) — el
-   backend ya tiene el CRUD completo (`cloud/README.md` → punto 4, 2026-10-07).
-3. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
+   ajustar detalles visuales contra los mockups. Esto cubriría de una las tres pantallas nuevas
+   de Perfil (editar residente/cámaras, familiares) y el login real, ninguno probado todavía en
+   un celular.
+2. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
    rutina y en caídas/inmovilidad (`cloud/README.md` → punto 3, 2026-10-07). Falta: pasar a
    *development build* (no anda en Expo Go), registrar el token del celular al loguearse y
    abrir el detalle de la alerta al tocar la notificación.
-4. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
+3. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

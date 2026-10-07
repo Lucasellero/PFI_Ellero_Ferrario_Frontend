@@ -30,6 +30,9 @@ const LATENCIA_MS = 400;
 const esperar = () => new Promise((r) => setTimeout(r, LATENCIA_MS));
 
 export const EMAIL_DEMO = 'ana.gomez@mail.com';
+/** Cuenta de prueba con perfil pero sin hogar — para probar "invitar familiar" (RF12): existe
+ * en la app (ya hizo `POST /me`), pero no está vinculada a ningún hogar todavía. */
+export const EMAIL_FAMILIAR_DEMO = 'carlos.gomez@mail.com';
 
 /**
  * Kits "de fábrica". `hogarId` null = todavía no vinculado. El LR-000101 es el de la cuenta demo
@@ -238,6 +241,12 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
     email: EMAIL_DEMO,
     hogares: [{ hogarId: demo.id, rol: 'responsable_principal' }],
   });
+  familiares.set(EMAIL_FAMILIAR_DEMO, {
+    id: siguienteFamiliar++,
+    nombre: 'Carlos Gómez',
+    email: EMAIL_FAMILIAR_DEMO,
+    hogares: [],
+  });
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -259,6 +268,30 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
       throw new ApiError(403, 'No tenés acceso a este hogar.');
     }
     return h;
+  }
+
+  /** Como `hogar_autorizado(..., solo_responsable=True)` del backend (RF12). */
+  async function exigirResponsable(hogarId: number): Promise<FamiliarMock> {
+    const f = await familiarActual();
+    const v = f.hogares.find((x) => x.hogarId === hogarId);
+    if (!v) throw new ApiError(403, 'No tenés acceso a este hogar.');
+    if (v.rol !== 'responsable_principal') {
+      throw new ApiError(403, 'Solo el responsable principal del hogar puede cambiar esto.');
+    }
+    return f;
+  }
+
+  function buscarVinculo(hogarId: number, familiarId: number) {
+    const f = Array.from(familiares.values()).find((x) => x.id === familiarId);
+    const v = f?.hogares.find((x) => x.hogarId === hogarId);
+    if (!f || !v) throw new ApiError(404, 'Ese familiar no está vinculado a este hogar.');
+    return { f, v };
+  }
+
+  function esUnicoResponsable(hogarId: number, familiarId: number): boolean {
+    return !Array.from(familiares.values()).some(
+      (x) => x.id !== familiarId && x.hogares.some((v) => v.hogarId === hogarId && v.rol === 'responsable_principal'),
+    );
   }
 
   function perfilDe(f: FamiliarMock): Perfil {
@@ -388,6 +421,61 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
       h.residente = { id: h.residente?.id ?? h.id, nombre, telefono };
       // El nombre del hogar sale del residente ("Casa de Rosa"); se puede cambiar después.
       if (h.nombre === 'Mi hogar') h.nombre = `Casa de ${nombre.split(' ')[0]}`;
+    },
+
+    async listarFamiliares(hogarId) {
+      await esperar();
+      await hogarAutorizado(hogarId);
+      return Array.from(familiares.values())
+        .map((f) => ({ f, v: f.hogares.find((x) => x.hogarId === hogarId) }))
+        .filter((x): x is { f: FamiliarMock; v: { hogarId: number; rol: string } } => x.v != null)
+        .map(({ f, v }) => ({ id: f.id, nombre: f.nombre, email: f.email, rol: v.rol }));
+    },
+
+    async invitarFamiliar(hogarId, { email, rol }) {
+      await esperar();
+      await exigirResponsable(hogarId);
+      const f = familiares.get(email);
+      if (!f) {
+        throw new ApiError(404, 'Esa persona todavía no tiene una cuenta en la app. Pedile que se registre primero.');
+      }
+      const existente = f.hogares.find((v) => v.hogarId === hogarId);
+      if (existente) return { id: f.id, nombre: f.nombre, email: f.email, rol: existente.rol };
+      f.hogares.push({ hogarId, rol });
+      return { id: f.id, nombre: f.nombre, email: f.email, rol };
+    },
+
+    async cambiarRolFamiliar(hogarId, familiarId, { rol }) {
+      await esperar();
+      await exigirResponsable(hogarId);
+      const { f, v } = buscarVinculo(hogarId, familiarId);
+      if (v.rol === 'responsable_principal' && rol !== 'responsable_principal' && esUnicoResponsable(hogarId, familiarId)) {
+        throw new ApiError(
+          409,
+          'Es el único responsable principal del hogar — asigná otro responsable antes de cambiarle el rol.',
+        );
+      }
+      v.rol = rol;
+      return { id: f.id, nombre: f.nombre, email: f.email, rol };
+    },
+
+    async quitarFamiliar(hogarId, familiarId) {
+      await esperar();
+      const actual = await familiarActual();
+      const vinculoPropio = actual.hogares.find((v) => v.hogarId === hogarId);
+      if (!vinculoPropio) throw new ApiError(403, 'No tenés acceso a este hogar.');
+      const esSelf = actual.id === familiarId;
+      if (!esSelf && vinculoPropio.rol !== 'responsable_principal') {
+        throw new ApiError(403, 'Solo el responsable principal puede desvincular a otro familiar.');
+      }
+      const { f, v } = buscarVinculo(hogarId, familiarId);
+      if (v.rol === 'responsable_principal' && esUnicoResponsable(hogarId, familiarId)) {
+        throw new ApiError(
+          409,
+          'Es el único responsable principal del hogar — asigná otro responsable antes de desvincularlo.',
+        );
+      }
+      f.hogares = f.hogares.filter((x) => x.hogarId !== hogarId);
     },
   };
 }

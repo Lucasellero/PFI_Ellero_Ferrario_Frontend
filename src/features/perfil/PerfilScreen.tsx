@@ -1,5 +1,6 @@
 import Feather from '@expo/vector-icons/Feather';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Boton } from '@/components/Boton';
@@ -56,6 +57,27 @@ export function PerfilScreen() {
               />
             )}
             <Fila icono="shield" titulo="Tu rol" valor={ROLES[hogar.rol] ?? hogar.rol} ultima />
+          </View>
+        )}
+
+        {hogar && (
+          <View style={styles.seccion}>
+            <Text style={typography.seccion}>Hogar</Text>
+            {hogar.rol === 'responsable_principal' && (
+              <>
+                <EnlaceFila
+                  icono="user"
+                  label="Editar residente"
+                  onPress={() => router.push('/editar-residente')}
+                />
+                <EnlaceFila
+                  icono="video"
+                  label="Ubicación de las cámaras"
+                  onPress={() => router.push('/editar-camaras')}
+                />
+              </>
+            )}
+            <EnlaceFila icono="users" label="Familiares" onPress={() => router.push('/familiares')} />
           </View>
         )}
 
@@ -118,6 +140,27 @@ function Fila({
   );
 }
 
+/** Fila tocable que navega a otra pantalla (editar residente/cámaras, familiares). */
+function EnlaceFila({
+  icono,
+  label,
+  onPress,
+}: {
+  icono: 'user' | 'video' | 'users';
+  label: string;
+  onPress: () => void;
+}) {
+  const { colors, typography } = useTema();
+  const styles = useEstilos(crearEstilos);
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" style={styles.enlace}>
+      <Feather name={icono} size={18} color={colors.acento} />
+      <Text style={[typography.cuerpoFuerte, styles.enlaceTexto]}>{label}</Text>
+      <Feather name="chevron-right" size={18} color={colors.textoTenue} />
+    </Pressable>
+  );
+}
+
 const crearEstilos = ({ colors }: Tema) =>
   StyleSheet.create({
     pantalla: {
@@ -144,6 +187,19 @@ const crearEstilos = ({ colors }: Tema) =>
     filaBorde: {
       borderBottomWidth: 1,
       borderBottomColor: colors.borde,
+    },
+    enlace: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      padding: spacing.lg,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.borde,
+      backgroundColor: colors.superficie,
+    },
+    enlaceTexto: {
+      flex: 1,
     },
     seccion: {
       gap: spacing.md,

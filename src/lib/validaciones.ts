@@ -164,3 +164,29 @@ export function validarTextoCorto(texto: string, campo: string, max = 40): Resul
   if (limpio.length > max) return error(`Revisá ${campo}: máximo ${max} caracteres.`);
   return ok(limpio);
 }
+
+/**
+ * Ubicación de cada cámara de un hogar: obligatoria, corta y sin repetirse entre cámaras
+ * (RF10). La usan tanto la configuración inicial (`features/vinculacion/`) como editarlas
+ * después desde Perfil (`features/perfil/`) — misma regla, un solo lugar.
+ */
+export function validarUbicaciones(ubicaciones: Record<number, string>): Record<number, Resultado> {
+  const resultado: Record<number, Resultado> = {};
+  const vistas = new Map<string, number>();
+  for (const [id, texto] of Object.entries(ubicaciones)) {
+    const v = validarTextoCorto(texto, 'dónde está la cámara');
+    if (v.ok) {
+      const clave = v.valor.toLowerCase();
+      if (vistas.has(clave)) {
+        resultado[Number(id)] = {
+          ok: false,
+          error: `"${v.valor}" ya es otra cámara. Sumale un detalle (ej. "${v.valor} 2").`,
+        };
+        continue;
+      }
+      vistas.set(clave, Number(id));
+    }
+    resultado[Number(id)] = v;
+  }
+  return resultado;
+}

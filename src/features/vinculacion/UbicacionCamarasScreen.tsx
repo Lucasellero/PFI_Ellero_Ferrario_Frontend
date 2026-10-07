@@ -11,34 +11,12 @@ import { Boton } from '@/components/Boton';
 import { CampoTexto } from '@/components/CampoTexto';
 import { Chip } from '@/components/Chip';
 import { useCuenta } from '@/features/cuenta/CuentaProvider';
-import { validarTextoCorto, type Resultado } from '@/lib/validaciones';
+import { validarUbicaciones } from '@/lib/validaciones';
 import { radius, spacing, useEstilos, useTema, type Tema } from '@/theme';
 
 import { TOTAL_PASOS, useVinculacion } from './VinculacionProvider';
 
 const SUGERENCIAS = ['Living', 'Cocina', 'Dormitorio', 'Pasillo', 'Puerta del baño', 'Entrada'];
-
-/** Ubicación de cada cámara: obligatoria, corta y sin repetirse entre cámaras del hogar. */
-function validarUbicaciones(ubicaciones: Record<number, string>): Record<number, Resultado> {
-  const resultado: Record<number, Resultado> = {};
-  const vistas = new Map<string, number>();
-  for (const [id, texto] of Object.entries(ubicaciones)) {
-    const v = validarTextoCorto(texto, 'dónde está la cámara');
-    if (v.ok) {
-      const clave = v.valor.toLowerCase();
-      if (vistas.has(clave)) {
-        resultado[Number(id)] = {
-          ok: false,
-          error: `"${v.valor}" ya es otra cámara. Sumale un detalle (ej. "${v.valor} 2").`,
-        };
-        continue;
-      }
-      vistas.set(clave, Number(id));
-    }
-    resultado[Number(id)] = v;
-  }
-  return resultado;
-}
 
 /**
  * Paso 3 · Cámaras: dónde está cada una (RF10 desde la app; el informe, Sección 3.8, prevé que

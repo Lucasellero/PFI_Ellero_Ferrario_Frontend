@@ -42,6 +42,10 @@
 | — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend y `listarEventos` ya los acepta (2026-10-07). `features/reportes` manda `desde` por período; nadie manda `tipo`/`hasta` todavía |
 | `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo 2 indicadores (`comida`, `sedentarismo`) calculados al vuelo sobre `Evento` — ver `cloud/app/rutina.py`. Sin `"despertar"`: no hay clase de cámara que lo detecte |
 | — | `POST /me/push-token` (RF8) | ✅ Existe en el backend (2026-10-07, body `{token}`, 204). **La app todavía no lo llama ni recibe push**: requiere *development build* para obtener un token de FCM real — no anda en Expo Go (ver `features/auth/README.md`, "Si se pasa a development build") |
+| `listarFamiliares` | `GET /hogares/{id}/familiares` | ✅ Existe e implementado en `http.ts` (2026-10-07, RF12). Cualquier familiar vinculado |
+| `invitarFamiliar` | `POST /hogares/{id}/familiares` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo `responsable_principal`; 404 si el email no tiene cuenta todavía |
+| `cambiarRolFamiliar` | `PATCH /hogares/{id}/familiares/{familiar_id}` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo `responsable_principal`; 409 si es el único |
+| `quitarFamiliar` | `DELETE /hogares/{id}/familiares/{familiar_id}` | ✅ Existe e implementado en `http.ts` (2026-10-07). Uno mismo siempre puede; a otro, solo `responsable_principal`; 409 si es el único `responsable_principal` |
 
 **Vinculación del kit:** contrato completo (bodies, respuestas, errores 404/409/429, qué hace
 cada endpoint y seguridad) y cambios a la base de datos en
@@ -57,6 +61,10 @@ cada endpoint y seguridad) y cambios a la base de datos en
 | LR-000125 | `M2VC-5ZKA` | Plan de 2 cámaras |
 | LR-000123 | `7K3P-9QXM` | Plan de 3 cámaras (el máximo) |
 | LR-000101 | `Q9TB-6XJV` | Ya vinculado a la cuenta demo → error "ya vinculado" |
+
+**Para probar "invitar familiar" (RF12):** `carlos.gomez@mail.com` (`EMAIL_FAMILIAR_DEMO`) tiene
+cuenta en el mock pero no está vinculado a ningún hogar — invitarlo desde la cuenta demo
+funciona; cualquier otro email da 404 "todavía no tiene cuenta".
 
 Después de 5 códigos inexistentes seguidos el mock responde 429 (demasiados intentos), como
 debería hacer el backend.

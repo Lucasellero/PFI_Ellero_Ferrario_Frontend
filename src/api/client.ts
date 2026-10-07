@@ -6,7 +6,10 @@ import { API_MODE } from '@/config';
 
 import { crearHttpApi } from './http';
 import { crearMockApi } from './mock';
-import type { Camara, DatosResidente, Evento, EventType, KitVinculado, Perfil, Periodo, ResumenRutina } from './types';
+import type {
+  Camara, DatosResidente, Evento, EventType, FamiliarVinculado, KitVinculado, Perfil, Periodo,
+  ResumenRutina,
+} from './types';
 
 /** Devuelve el ID token de Firebase del usuario logueado (en modo mock, un token de prueba). */
 export type TokenProvider = () => Promise<string | null>;
@@ -44,6 +47,23 @@ export interface Api {
   actualizarCamara(hogarId: number, camaraId: number, cambios: { ubicacion: string }): Promise<Camara>;
   /** `PUT /hogares/{id}/residente` — crea o actualiza el residente (1:1 con el hogar). */
   guardarResidente(hogarId: number, datos: DatosResidente): Promise<void>;
+
+  // ── Familiares/roles (RF12) ─────────────────────────────────────────────────────
+  /** `GET /hogares/{id}/familiares`. Cualquier familiar vinculado. */
+  listarFamiliares(hogarId: number): Promise<FamiliarVinculado[]>;
+  /**
+   * `POST /hogares/{id}/familiares` con `{ email, rol }`. Solo `responsable_principal`. 404 si
+   * esa persona todavía no tiene cuenta en la app (sin invitación pendiente, tiene que
+   * registrarse primero). Idempotente: invitar a alguien ya vinculado devuelve su vínculo tal
+   * cual, sin pisarle el rol.
+   */
+  invitarFamiliar(hogarId: number, datos: { email: string; rol: string }): Promise<FamiliarVinculado>;
+  /** `PATCH /hogares/{id}/familiares/{familiar_id}` con `{ rol }`. Solo `responsable_principal`.
+   * 409 si es el único `responsable_principal` del hogar y se le intenta bajar el rol. */
+  cambiarRolFamiliar(hogarId: number, familiarId: number, datos: { rol: string }): Promise<FamiliarVinculado>;
+  /** `DELETE /hogares/{id}/familiares/{familiar_id}`. Uno mismo siempre puede desvincularse; a
+   * otro familiar, solo `responsable_principal`. 409 si es el único `responsable_principal`. */
+  quitarFamiliar(hogarId: number, familiarId: number): Promise<void>;
 }
 
 let tokenProvider: TokenProvider = async () => null;

@@ -6,7 +6,7 @@ import { API_URL } from '@/config';
 
 import type { Api } from './client';
 import { ApiError } from './errors';
-import type { Camara, Evento, KitVinculado, Perfil, ResumenRutina } from './types';
+import type { Camara, Evento, FamiliarVinculado, KitVinculado, Perfil, ResumenRutina } from './types';
 
 export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
   async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -52,5 +52,18 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
       }),
     guardarResidente: (hogarId, datos) =>
       request<void>(`/hogares/${hogarId}/residente`, { method: 'PUT', body: JSON.stringify(datos) }),
+    listarFamiliares: (hogarId) => request<FamiliarVinculado[]>(`/hogares/${hogarId}/familiares`),
+    invitarFamiliar: (hogarId, datos) =>
+      request<FamiliarVinculado>(`/hogares/${hogarId}/familiares`, {
+        method: 'POST',
+        body: JSON.stringify(datos),
+      }),
+    cambiarRolFamiliar: (hogarId, familiarId, datos) =>
+      request<FamiliarVinculado>(`/hogares/${hogarId}/familiares/${familiarId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(datos),
+      }),
+    quitarFamiliar: (hogarId, familiarId) =>
+      request<void>(`/hogares/${hogarId}/familiares/${familiarId}`, { method: 'DELETE' }),
   };
 }

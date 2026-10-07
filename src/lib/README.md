@@ -27,6 +27,7 @@ const tel = validarTelefonoAR('11 15 2345-6789');
 | `validarTelefonoAR` | Teléfono de Argentina escrito como sea (con/sin +54, 9, 0, 15, espacios, guiones). Código de área + número = 10 dígitos. Devuelve **E.164**: `+549…` si es celular (tenía 9 o 15), `+54…` si es fijo. |
 | `formatearTelefonoAR` | E.164 → "+54 9 11 2345-6789" para mostrar. |
 | `validarTextoCorto` | Obligatorio, 2 a `max` caracteres (ej. ubicación de una cámara). |
+| `validarUbicaciones` | `validarTextoCorto` sobre un mapa `{ camaraId: texto }` + que no se repita entre cámaras del mismo hogar (RF10). Usada por la configuración inicial y por editar cámaras desde Perfil — una sola regla. |
 
 ### Decisiones
 

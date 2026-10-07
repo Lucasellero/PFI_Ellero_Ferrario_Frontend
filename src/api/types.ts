@@ -123,6 +123,15 @@ export interface HogarApi {
   kit: KitResumen | null;
 }
 
+/** `GET/POST/PATCH /hogares/{id}/familiares` (RF12). */
+export interface FamiliarVinculado {
+  id: number;
+  nombre: string;
+  email: string;
+  /** "responsable_principal" | "familiar". */
+  rol: string;
+}
+
 /**
  * Kit tal como viene de fábrica. `cantidad_camaras` es el plan que compró el cliente (1 a 3,
  * informe Sección 3.9.2.1: el kit trae 1 cámara y se pueden sumar hasta 3 por controladora).
