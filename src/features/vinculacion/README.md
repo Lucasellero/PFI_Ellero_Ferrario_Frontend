@@ -10,7 +10,7 @@ Sección 3.8, prevé que se asigne desde la aplicación móvil).
 
 | Archivo | Ruta | Qué es |
 |---|---|---|
-| `InicioVinculacionScreen.tsx` | `/vinculacion` | Paso 1: instrucciones + "Escanear el QR" / "Ingresar el código a mano" / "¿Ya te invitó un familiar? Actualizar". Si ya hay un kit vinculado sin terminar, redirige al paso 2. |
+| `InicioVinculacionScreen.tsx` | `/vinculacion` | Arranque en 3 vistas internas (`modo`, estado local, no son rutas separadas): **elegir** ("Tengo un kit" / "Un familiar ya usa Lares"), **invitado** (correo a invitar + "Actualizar") y **kit** (paso 1 real: instrucciones + escanear/código a mano). Si ya hay un kit vinculado sin terminar, redirige al paso 2. |
 | `EscanearQrScreen.tsx` | `/vinculacion/escanear` | Paso 1: cámara (`expo-camera`), con manejo del permiso (pedir / abrir Ajustes). |
 | `CodigoManualScreen.tsx` | `/vinculacion/codigo` | Paso 1: código a mano, formateado mientras se escribe ("7K3P-9QXM"). |
 | `DatosResidenteScreen.tsx` | `/vinculacion/residente` | Paso 2: nombre (obligatorio) y teléfono (opcional) del residente. |
@@ -40,13 +40,18 @@ Sección 3.8, prevé que se asigne desde la aplicación móvil).
   entrevistas del informe (Sección 3.1.2.2).
 - **Permiso de cámara**: el texto explica que solo se usa para leer el QR y que no se guarda
   ninguna imagen (coherente con RNF1). No se pide micrófono (`app.json`).
-- **"¿Ya te invitó un familiar? Actualizar"** (2026-10-07, encontrado probando en un celular
-  real): un familiar que crea su cuenta primero y lo invitan después (`FamiliaresScreen` del
-  `responsable_principal`, RF12) quedaba trabado en esta pantalla — `GET /me` solo se pide una
-  vez al loguearse (`CuentaProvider`, sin polling), así que la app nunca se enteraba sola de la
-  invitación nueva. El botón llama `recargarPerfil()`; si ya está vinculado, `Stack.Protected`
+- **"¿Cómo vas a usar Lares?" antes de pedir el QR** (2026-10-07, dos vueltas probando en un
+  celular real). Primera vuelta: un familiar que crea su cuenta primero y lo invitan después
+  (`FamiliaresScreen` del `responsable_principal`, RF12) quedaba trabado en la pantalla de
+  escanear sin salida — `GET /me` solo se pide una vez al loguearse (`CuentaProvider`, sin
+  polling), así que la app nunca se enteraba sola de la invitación nueva; se agregó un botón
+  "Actualizar" (`recargarPerfil()`) como link al pie. Segunda vuelta (mismo día, pidiendo
+  feedback directo): ese link era poco visible — se separó en una vista de elección previa
+  ("Tengo un kit" / "Un familiar ya usa Lares"), dos opciones del mismo tamaño, y quien elige la
+  segunda cae en una vista de espera dedicada con su correo bien visible y el botón "Actualizar"
+  como acción primaria, no un link al pie. Si ya está vinculado al actualizar, `Stack.Protected`
   del layout raíz pasa solo a las pestañas (o al paso 2 si falta terminar la configuración) sin
-  hacer falta cerrar sesión y volver a entrar (que era el único workaround antes de este fix).
+  hacer falta cerrar sesión y volver a entrar.
 
 ## Cómo probar (mock)
 
