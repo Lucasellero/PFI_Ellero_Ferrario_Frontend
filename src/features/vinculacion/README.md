@@ -10,7 +10,7 @@ Sección 3.8, prevé que se asigne desde la aplicación móvil).
 
 | Archivo | Ruta | Qué es |
 |---|---|---|
-| `InicioVinculacionScreen.tsx` | `/vinculacion` | Paso 1: instrucciones + "Escanear el QR" / "Ingresar el código a mano". Si ya hay un kit vinculado sin terminar, redirige al paso 2. |
+| `InicioVinculacionScreen.tsx` | `/vinculacion` | Paso 1: instrucciones + "Escanear el QR" / "Ingresar el código a mano" / "¿Ya te invitó un familiar? Actualizar". Si ya hay un kit vinculado sin terminar, redirige al paso 2. |
 | `EscanearQrScreen.tsx` | `/vinculacion/escanear` | Paso 1: cámara (`expo-camera`), con manejo del permiso (pedir / abrir Ajustes). |
 | `CodigoManualScreen.tsx` | `/vinculacion/codigo` | Paso 1: código a mano, formateado mientras se escribe ("7K3P-9QXM"). |
 | `DatosResidenteScreen.tsx` | `/vinculacion/residente` | Paso 2: nombre (obligatorio) y teléfono (opcional) del residente. |
@@ -40,6 +40,13 @@ Sección 3.8, prevé que se asigne desde la aplicación móvil).
   entrevistas del informe (Sección 3.1.2.2).
 - **Permiso de cámara**: el texto explica que solo se usa para leer el QR y que no se guarda
   ninguna imagen (coherente con RNF1). No se pide micrófono (`app.json`).
+- **"¿Ya te invitó un familiar? Actualizar"** (2026-10-07, encontrado probando en un celular
+  real): un familiar que crea su cuenta primero y lo invitan después (`FamiliaresScreen` del
+  `responsable_principal`, RF12) quedaba trabado en esta pantalla — `GET /me` solo se pide una
+  vez al loguearse (`CuentaProvider`, sin polling), así que la app nunca se enteraba sola de la
+  invitación nueva. El botón llama `recargarPerfil()`; si ya está vinculado, `Stack.Protected`
+  del layout raíz pasa solo a las pestañas (o al paso 2 si falta terminar la configuración) sin
+  hacer falta cerrar sesión y volver a entrar (que era el único workaround antes de este fix).
 
 ## Cómo probar (mock)
 

@@ -17,7 +17,9 @@ Rutas (fuera de las pestañas, ver `src/app/`): `/editar-residente`, `/editar-ca
 - **Invitar es "a quien ya tiene cuenta".** Igual que decidió el backend
   (`cloud/README.md` → "Cómo seguir" punto 4): sin invitación pendiente por mail. Si el email no
   tiene cuenta en la app, el error (404) se muestra con `Alert.alert` tal cual lo manda el
-  backend.
+  backend. **Para quien invitan:** si recién se registra y lo invitan después, no se entera solo
+  — ver "¿Ya te invitó un familiar? Actualizar" en `features/vinculacion/README.md` (mismo día,
+  bug encontrado probando en un celular real).
 - **"Salir del hogar" en vez de pedir confirmación aparte por pantalla.** Se usa `Alert.alert`
   (nativo), igual que "marcar como resuelta" en `DetalleAlertaSheet` — no hay un componente de
   diálogo propio en la app todavía.

@@ -1,6 +1,7 @@
 import Feather from '@expo/vector-icons/Feather';
 import { Link, Redirect, router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BarraSuperior } from '@/components/BarraSuperior';
@@ -21,15 +22,22 @@ const INSTRUCCIONES = [
 /** Paso 1 · Vincular el kit: qué hacer y cómo (QR o código a mano). */
 export function InicioVinculacionScreen() {
   const { cerrarSesion } = useAuth();
-  const { perfil, hogarPendiente } = useCuenta();
+  const { perfil, hogarPendiente, recargarPerfil } = useCuenta();
   const { colors, typography } = useTema();
   const styles = useEstilos(crearEstilos);
+  const [actualizando, setActualizando] = useState(false);
 
   // El kit ya quedó vinculado pero falta la configuración inicial (ej. se cerró la app a mitad
   // de camino): se retoma desde el paso 2.
   if (hogarPendiente) return <Redirect href="/vinculacion/residente" />;
 
   const nombre = perfil ? primerNombre(perfil.familiar.nombre) : '';
+
+  async function onActualizar() {
+    setActualizando(true);
+    await recargarPerfil();
+    setActualizando(false);
+  }
 
   return (
     <SafeAreaView style={styles.pantalla}>
@@ -69,6 +77,24 @@ export function InicioVinculacionScreen() {
             </Pressable>
           </Link>
         </View>
+
+        <View style={styles.separador}>
+          <View style={styles.linea} />
+          <Text style={typography.pequeno}>o</Text>
+          <View style={styles.linea} />
+        </View>
+
+        <Pressable
+          onPress={onActualizar}
+          disabled={actualizando}
+          accessibilityRole="button"
+          style={styles.link}>
+          {actualizando ? (
+            <ActivityIndicator color={colors.acento} />
+          ) : (
+            <Text style={styles.linkTexto}>¿Ya te invitó un familiar? Actualizar</Text>
+          )}
+        </Pressable>
 
         <View style={styles.privacidad}>
           <Feather name="shield" size={16} color={colors.acento} />
@@ -144,6 +170,16 @@ const crearEstilos = ({ colors, typography }: Tema) =>
     },
     acciones: {
       gap: spacing.sm,
+    },
+    separador: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    linea: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.borde,
     },
     link: {
       alignSelf: 'center',
