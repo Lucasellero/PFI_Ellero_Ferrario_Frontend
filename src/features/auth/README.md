@@ -6,7 +6,8 @@ mismo lenguaje.
 
 | Archivo | Qué es |
 |---|---|
-| `AuthProvider.tsx` | Contexto de sesión: `useAuth()` → `usuario`, `iniciarSesion`, `registrarCuenta`, `cerrarSesion`, `recuperarContrasena`. |
+| `AuthProvider.tsx` | Contexto de sesión: `useAuth()` → `usuario`, `iniciarSesion`, `registrarCuenta`, `cerrarSesion`, `recuperarContrasena`. Dos ramas internas según `AUTH_MODE` (`src/config`), ver "Estado" abajo. |
+| `firebase.ts` | Inicialización perezosa del SDK web de Firebase (`initializeAuth` + `getReactNativePersistence(AsyncStorage)`), solo se ejecuta si `AUTH_MODE=firebase`. |
 | `LoginScreen.tsx` | Login: logo y frase de la marca, correo, contraseña, "Olvidé mi contraseña", "¿Te llegó un kit Lares? Creá tu cuenta", pie de privacidad. |
 | `RegistroScreen.tsx` | Crear cuenta: nombre, correo, contraseña (con requisitos en vivo) y confirmación. Es el primer paso de la vinculación del kit (`docs/vinculacion-kit.md`). |
 
@@ -41,8 +42,9 @@ el error aparece debajo del campo (`CampoTexto`) y se anuncia al lector de panta
 - **Login fallido:** el mismo mensaje para "no existe" y "contraseña incorrecta" ("El correo o
   la contraseña no son correctos"), como hace Firebase: no revela qué mails tienen cuenta.
 
-## Estado: MOCK
+## Estado: dos modos, según `EXPO_PUBLIC_AUTH_MODE` (`.env.local`)
 
+**`mock`** (default — no necesita nada):
 - Cuenta demo **`ana.gomez@mail.com`** con cualquier contraseña de 6+ caracteres: entra directo
   a las pestañas con datos de prueba.
 - **Crear cuenta** con otro mail de un proveedor permitido: la cuenta vive en memoria (se pierde al recargar la
@@ -50,28 +52,42 @@ el error aparece debajo del campo (`CampoTexto`) y se anuncia al lector de panta
 - No persiste la sesión (al recargar la app hay que volver a entrar).
 - "Olvidé mi contraseña" muestra el aviso pero no manda nada.
 
-## Plan para conectar Firebase Authentication
+**`firebase`** (2026-10-07 — real, SDK web de Firebase en Expo Go, sin development build):
+- Proyecto `pfi-ellero-ferrario`, Email/Password (runbook en `cloud/README.md` del Backend →
+  "Cómo seguir" → punto 2, ✅ hecho). Config pública en `.env.local`
+  (`EXPO_PUBLIC_FIREBASE_*`, ver `.env.example`).
+- `iniciarSesion` → `signInWithEmailAndPassword`; `registrarCuenta` →
+  `createUserWithEmailAndPassword` + `updateProfile({ displayName })` y después
+  `api.crearPerfil({ nombre })` (`POST /me`) **antes** de dejar pasar a la app (si falla, se
+  borra el usuario de Firebase recién creado para no dejar una cuenta sin `Familiar`);
+  `cerrarSesion` → `signOut`; `recuperarContrasena` → `sendPasswordResetEmail`; `usuario` ←
+  `onAuthStateChanged` (con un flag `listo` para no mostrar "sin sesión" mientras Firebase
+  restaura la sesión guardada en AsyncStorage al abrir la app).
+- `configurarTokenProvider(() => auth.currentUser?.getIdToken() ?? null)` — el backend verifica
+  ese token (`cloud/app/auth.py`).
+- Códigos de error de Firebase (`auth/invalid-credential`, `auth/email-already-in-use`,
+  `auth/weak-password`...) traducidos a `AuthError` con mensaje en español
+  (`mensajeErrorFirebase` en `AuthProvider.tsx`).
+- Requiere además `EXPO_PUBLIC_API_MODE=http` apuntando al backend real para que
+  `api.crearPerfil`/`GET /me` funcionen — los dos modos son independientes pero `firebase` sin
+  `http` deja a la cuenta sin `Familiar` en el backend.
+- **Sin probar todavía desde la app en un celular** (sí probado el flujo completo del lado del
+  backend con un ID token real de Firebase, ver `cloud/README.md`).
+- Bug de tipos conocido y sin fix de `firebase-js-sdk` v12
+  ([#9316](https://github.com/firebase/firebase-js-sdk/issues/9316)): `getReactNativePersistence`
+  no está en los tipos de `firebase/auth` aunque sí existe en runtime — `firebase.ts` lo
+  silencia con `@ts-expect-error` documentado.
 
-Prerequisito: proyecto de Firebase creado con "Email/Password" habilitado (runbook en
-`cloud/README.md` del Backend → "Cómo seguir" → punto 2).
+**Un solo componente, no dos hooks elegidos por `if`:** `AuthProvider` llama siempre los mismos
+`useState`/`useEffect` (`AUTH_MODE` se fija por build, no cambia en tiempo de ejecución) y cada
+método (`iniciarSesion`, etc.) bifurca internamente — así no se violan las reglas de hooks de
+React por un hook condicional.
 
-1. **Ahora, en Expo Go:** SDK web de Firebase (`npx expo install firebase`; AsyncStorage ya
-   está instalado), con `initializeAuth` + `getReactNativePersistence(AsyncStorage)` para que la
-   sesión sobreviva al reinicio. Reemplazar el cuerpo de `AuthProvider`:
-   - `iniciarSesion` → `signInWithEmailAndPassword`.
-   - `registrarCuenta` → `createUserWithEmailAndPassword` + `updateProfile({ displayName })`
-     (sin `sendEmailVerification`), y después `api.crearPerfil({ nombre })` (`POST /me`) **antes** de
-     dar la sesión por iniciada (así `GET /me` ya encuentra al familiar).
-   - `cerrarSesion` → `signOut`.
-   - `recuperarContrasena` → `sendPasswordResetEmail`.
-   - `usuario` ← `onAuthStateChanged`.
-   - `configurarTokenProvider(() => auth.currentUser?.getIdToken() ?? null)` — el backend
-     verifica ese token (`cloud/app/auth.py`).
-   - Traducir los códigos de error de Firebase (`auth/invalid-credential`,
-     `auth/email-already-in-use`, `auth/weak-password`...) a `AuthError` con mensaje en español.
-2. **Cuando se pase a development build (por las push):** evaluar migrar a
-   `@react-native-firebase/auth` + `messaging`, un solo SDK nativo para login y push, que es lo
-   que describe literalmente el informe (cap. 4). Gracias a `useAuth()` las pantallas no cambian.
+## Si se pasa a development build (por las push)
+
+Evaluar migrar a `@react-native-firebase/auth` + `messaging`, un solo SDK nativo para login y
+push, que es lo que describe literalmente el informe (cap. 4). Gracias a `useAuth()` las
+pantallas no cambian.
 
 ## Decisiones tomadas
 

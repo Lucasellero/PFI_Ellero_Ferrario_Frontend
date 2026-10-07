@@ -94,7 +94,7 @@ export interface Evento {
   resuelta?: boolean;
 }
 
-/** PENDIENTE BACKEND (`GET /me`): quién es el familiar logueado y a qué hogares accede. */
+/** `GET /me`: quién es el familiar logueado y a qué hogares accede. */
 export interface Perfil {
   familiar: { id: number; nombre: string; email: string };
   /**
@@ -107,7 +107,7 @@ export interface Perfil {
 export interface Residente {
   id: number;
   nombre: string;
-  /** E.164, ej. "+5491123456789". PENDIENTE BACKEND: columna `Residente.telefono`. */
+  /** E.164, ej. "+5491123456789". */
   telefono: string | null;
 }
 
@@ -118,7 +118,7 @@ export interface HogarApi {
   /** `HogarFamiliar.rol`: "responsable_principal" | "familiar". */
   rol: string;
   residente: Residente | null;
-  /** PENDIENTE BACKEND: el kit vinculado a este hogar (tabla `KIT`). */
+  /** El kit vinculado a este hogar (el último vinculado, ver `cloud/app/routers/me.py`). */
   kit: KitResumen | null;
 }
 
@@ -137,13 +137,13 @@ export interface HogarResumen extends HogarApi {
   residente: Residente;
 }
 
-// ── Vinculación del kit (PENDIENTE BACKEND — ver docs/vinculacion-kit.md) ─────
+// ── Vinculación del kit (ver docs/vinculacion-kit.md) ─────────────────────────
 
 /** `GET /hogares/{id}/camaras` y `PATCH /hogares/{id}/camaras/{camara_id}`. */
 export interface Camara {
   id: number;
   /** Id de la cámara en `cameras.yaml` de la controladora (Lar), ej. "cam1". */
-  local_id: string;
+  identificador_local: string;
   /** "Living", "Cocina"... La carga el familiar en la configuración inicial. */
   ubicacion: string | null;
   activa: boolean;

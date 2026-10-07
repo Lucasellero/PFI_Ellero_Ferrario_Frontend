@@ -19,8 +19,11 @@
   familiar se identifica por el token falso `mock:<email>` que arma `AuthProvider`.
 - **`http`**: pega contra `EXPO_PUBLIC_API_URL`. Desde el celular con Expo Go, la URL tiene que
   ser la **IP de la PC en la red local** (no `localhost`), y el backend se levanta con
-  `uvicorn main:app --host 0.0.0.0`. **Hoy no sirve todavía de punta a punta**: el backend no
-  tiene Firebase configurado (responde `501`) y faltan los endpoints de abajo.
+  `uvicorn main:app --host 0.0.0.0`. Requiere además `EXPO_PUBLIC_AUTH_MODE=firebase` (ver
+  `features/auth/README.md`): con `AUTH_MODE=mock` el token es `mock:<email>`, que el backend
+  real rechaza. Probado de punta a punta (2026-10-07) con `fastapi.testclient` + un ID token real
+  de Firebase y Postgres: `GET`/`POST /me`, `POST /kits/vincular`, `PATCH` ubicación,
+  `PUT residente`, eventos del hogar. Sin probar todavía desde la app en un celular.
 
 ## Contrato con el backend
 
@@ -28,17 +31,17 @@
 |---|---|---|
 | `listarEventos` | `GET /hogares/{id}/eventos?limit=` | ✅ Existe (`cloud/app/routers/mobile.py`) |
 | — | `GET /hogares/{id}/alertas` | ✅ Existe, la app no lo usa: filtra severidad del lado del cliente (ver `features/eventos`) |
-| `obtenerPerfil` | `GET /me` | ❌ **Falta.** Sin esto la app no sabe qué `hogar_id` consultar |
+| `obtenerPerfil` | `GET /me` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
+| `crearPerfil` | `POST /me` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
+| `vincularKit` | `POST /kits/vincular` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
+| `listarCamaras` | `GET /hogares/{id}/camaras` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
+| `actualizarCamara` | `PATCH /hogares/{id}/camaras/{camara_id}` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
+| `guardarResidente` | `PUT /hogares/{id}/residente` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
 | `marcarResuelta` | `POST /hogares/{id}/eventos/{evento_id}/resolver` (propuesto) | ❌ **Falta.** Tampoco existe la columna en `Evento` |
 | `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` (propuesto) | ❌ **Falta.** Necesita exponer la línea base de `baseline/` |
 | — | campo `ubicacion` en `EventoOut` | ❌ **Falta.** Join con `Camara.ubicacion`; la app lo muestra si viene |
 | — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ❌ **Falta.** Hoy la app pide los últimos 200 y filtra local |
 | — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño en `cloud/README.md` → "Cómo seguir" punto 3; decidido: columna `push_token` (null) en `Familiar` (ver `docs/vinculacion-kit.md`) |
-| `crearPerfil` | `POST /me` | ❌ **Falta.** Crea el `Familiar` al registrarse |
-| `vincularKit` | `POST /kits/vincular` | ❌ **Falta.** Necesita la tabla nueva `KIT` |
-| `listarCamaras` | `GET /hogares/{id}/camaras` | ❌ **Falta** (hoy solo existe el alta desde la controladora) |
-| `actualizarCamara` | `PATCH /hogares/{id}/camaras/{camara_id}` | ❌ **Falta** |
-| `guardarResidente` | `PUT /hogares/{id}/residente` | ❌ **Falta.** Implica sumar `telefono` a `Residente` |
 
 **Vinculación del kit:** contrato completo (bodies, respuestas, errores 404/409/429, qué hace
 cada endpoint y seguridad) y cambios a la base de datos en
@@ -91,6 +94,7 @@ backend porque es el que conoce la línea base; si se prefiere mandar números c
 
 ## Pendiente
 
-- Implementar `http.ts` para los endpoints que falten a medida que el backend los sume (hoy
-  tiran `ApiError(501)` con un mensaje claro).
-- Conectar el `TokenProvider` al ID token de Firebase (ver `features/auth/README.md`).
+- `marcarResuelta` y `obtenerResumenRutina` en `http.ts`: siguen en `pendiente(...)` (`ApiError`
+  501) hasta que el backend tenga esos endpoints.
+- Probar el modo `http` desde la app en un celular (hoy solo probado con `TestClient` del lado
+  del backend).

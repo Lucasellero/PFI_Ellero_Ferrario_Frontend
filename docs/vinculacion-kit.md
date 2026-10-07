@@ -214,8 +214,6 @@ ya emparejadas con la controladora. Al vincular, el backend les asigna el hogar.
 | ubicacion | string | **null** hasta que el familiar la carga en el paso 3 |
 | activa | boolean | |
 
-En el código del backend `identificador_local` se llama `local_id`; conviene unificar el nombre.
-
 **Regla:** un kit nunca tiene más cámaras que su `cantidad_camaras`. El backend la hace
 cumplir en dos lugares: al crear las cámaras en fábrica, y si la controladora intenta registrar
 una cámara de más (`POST /camaras` → 409 "el plan de este kit es de N cámaras"). Para pasar a un
@@ -405,7 +403,7 @@ Todos con `Authorization: Bearer <firebase_id_token>`, salvo los de la controlad
   "hogar_id": 3,
   "numero_serie": "LR-000124",
   "cantidad_camaras": 1,
-  "camaras": [{ "id": 11, "local_id": "cam1", "ubicacion": null, "activa": true }]
+  "camaras": [{ "id": 11, "identificador_local": "cam1", "ubicacion": null, "activa": true }]
 }
 ```
 

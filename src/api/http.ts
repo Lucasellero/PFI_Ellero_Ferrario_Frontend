@@ -6,7 +6,7 @@ import { API_URL } from '@/config';
 
 import type { Api } from './client';
 import { ApiError } from './errors';
-import type { Evento } from './types';
+import type { Camara, Evento, KitVinculado, Perfil } from './types';
 
 export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
   async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -32,17 +32,22 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
   }
 
   return {
-    obtenerPerfil: async () => pendiente('GET /me'),
-    crearPerfil: async () => pendiente('POST /me'),
+    obtenerPerfil: () => request<Perfil>('/me'),
+    crearPerfil: (datos) => request<Perfil>('/me', { method: 'POST', body: JSON.stringify(datos) }),
     listarEventos: (hogarId, { limit = 200 } = {}) =>
       request<Evento[]>(`/hogares/${hogarId}/eventos?limit=${limit}`),
     marcarResuelta: async () => pendiente('marcar alerta como resuelta'),
     obtenerResumenRutina: async () => pendiente('resumen de rutina'),
-    // Vinculación del kit: contrato en docs/vinculacion-kit.md. Cuando el backend los sume,
-    // reemplazar por request<...>() con la ruta indicada en `client.ts`.
-    vincularKit: async () => pendiente('POST /kits/vincular'),
-    listarCamaras: async () => pendiente('GET /hogares/{id}/camaras'),
-    actualizarCamara: async () => pendiente('PATCH /hogares/{id}/camaras/{camara_id}'),
-    guardarResidente: async () => pendiente('PUT /hogares/{id}/residente'),
+    // Vinculación del kit: contrato en docs/vinculacion-kit.md.
+    vincularKit: (codigo) =>
+      request<KitVinculado>('/kits/vincular', { method: 'POST', body: JSON.stringify({ codigo }) }),
+    listarCamaras: (hogarId) => request<Camara[]>(`/hogares/${hogarId}/camaras`),
+    actualizarCamara: (hogarId, camaraId, cambios) =>
+      request<Camara>(`/hogares/${hogarId}/camaras/${camaraId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(cambios),
+      }),
+    guardarResidente: (hogarId, datos) =>
+      request<void>(`/hogares/${hogarId}/residente`, { method: 'PUT', body: JSON.stringify(datos) }),
   };
 }

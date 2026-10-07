@@ -23,12 +23,12 @@ del residente.
 |---|---|
 | Pantallas de los mockups (Login, Notificaciones, Detalle de alerta, Reportes, Día en orden) + Perfil | ✅ Hechas, con datos de prueba |
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
-| Login real con Firebase Authentication | ⏳ Pendiente — falta crear el proyecto de Firebase |
+| Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
 | Notificaciones push (Firebase Cloud Messaging) | ⏳ Pendiente — requiere *development build* (no anda en Expo Go) |
-| Conexión al backend real | ⏳ Parcial — solo existe `GET /hogares/{id}/eventos`; el resto de endpoints falta en el backend (ver [`src/api/README.md`](src/api/README.md)) |
+| Conexión al backend real | ✅ Endpoints de `GET /me` a `PUT /hogares/{id}/residente` implementados en `http.ts` (2026-10-07); faltan `marcarResuelta` y resumen de rutina (ver [`src/api/README.md`](src/api/README.md)) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
-| Crear cuenta + vinculación del kit por QR + configuración inicial (residente, cámaras) | ✅ Hecho en la app con el mock · ⏳ endpoints y tablas pendientes en el backend ([`docs/vinculacion-kit.md`](docs/vinculacion-kit.md)) |
+| Crear cuenta + vinculación del kit por QR + configuración inicial (residente, cámaras) | ✅ Hecho en la app (mock y backend real) ([`docs/vinculacion-kit.md`](docs/vinculacion-kit.md)) |
 | Validación de formularios (mail, contraseña, nombre, teléfono, código del kit) | ✅ Hecha ([`src/lib/README.md`](src/lib/README.md)) |
 
 ---
@@ -352,26 +352,61 @@ invitar familiares (RF12).
 - `docs/cambios-informe-vinculacion.md` marcado como aplicado.
 - Verificado: `typecheck` y `lint`.
 
+### 2026-10-07 — Conexión al backend real (KIT) y login con Firebase
+
+**Qué se hizo**
+- **`src/api/types.ts`:** `Camara.local_id` → `identificador_local` (el backend lo renombró en
+  la migración `a3f9c2d17b40`, ver `cloud/README.md`). Mismo cambio en `mock.ts` y
+  `docs/vinculacion-kit.md`. Se sacaron los `PENDIENTE BACKEND` de `Perfil`, `HogarApi.kit` y
+  `Residente.telefono`: ya existen en `cloud/`.
+- **`src/api/http.ts`:** `obtenerPerfil`, `crearPerfil`, `vincularKit`, `listarCamaras`,
+  `actualizarCamara` y `guardarResidente` dejan de ser `pendiente(...)` (501) y pegan contra los
+  endpoints reales de `cloud/app/routers/`. `marcarResuelta` y `obtenerResumenRutina` siguen
+  pendientes (el backend no los tiene).
+- **Login con Firebase Authentication real:** `AuthProvider` suma una segunda implementación,
+  elegida por la variable nueva `EXPO_PUBLIC_AUTH_MODE` (`mock` default | `firebase`) — detalle
+  completo en [`src/features/auth/README.md`](src/features/auth/README.md). Nuevo
+  `src/features/auth/firebase.ts` (inicialización perezosa del SDK web). `firebase` sumado a
+  `package.json` (`npx expo install firebase`, SDK 57 → `firebase@12.19.0`).
+- Verificado: `npm run typecheck` y `npm run lint` sin errores. **No probado en un celular**
+  (ni el login con Firebase real ni los endpoints nuevos contra un backend corriendo en la red).
+
+**Decisiones**
+- **`AUTH_MODE` separado de `API_MODE`.** El plan original de este README decía "reemplazar el
+  cuerpo de `AuthProvider`" sin condición, pero eso rompía el modo demo completo (`mock.ts`
+  identifica al familiar con el token `mock:<email>` que arma el `AuthProvider` mock; un ID
+  token real de Firebase no matchea nada ahí). Con una variable de entorno más, igual que
+  `API_MODE`, se puede seguir probando la app sin ninguna cuenta ni red (default) y además
+  probar el login real cuando haga falta, sin que se pisen.
+- **Un solo componente `AuthProvider`, no dos hooks elegidos por `if`.** Llamar
+  `useAuthMock()` o `useAuthFirebase()` según una condición viola las reglas de hooks de React en
+  el linter (aunque `AUTH_MODE` no cambie en tiempo de ejecución). Se mantuvieron los mismos
+  `useState`/`useEffect` siempre y cada método bifurca por dentro.
+- **`getReactNativePersistence` con `@ts-expect-error` documentado.** Bug conocido de
+  `firebase-js-sdk` v12 sin fix ([#9316](https://github.com/firebase/firebase-js-sdk/issues/9316)):
+  existe en runtime (Metro resuelve el build de React Native de `@firebase/auth`) pero falta en
+  los tipos que reexporta `firebase/auth`. Se verificó contra el código fuente del paquete
+  instalado antes de aplicar el workaround, no se adivinó.
+
+**Pendiente:** probar todo el flujo (login Firebase + vinculación + eventos) desde la app en un
+celular contra el backend real; `marcarResuelta`, resumen de rutina y push tokens (ver
+`src/api/README.md` y `cloud/README.md` del Backend).
+
 ---
 
 ## Próximos pasos
 
 En orden sugerido:
 
-1. **Actualizar Node a 22 LTS** y **probar la app en los celulares** de los dos con Expo Go;
+1. **Actualizar Node a 22 LTS** y **probar la app en los celulares** de los dos con Expo Go,
+   con `EXPO_PUBLIC_API_MODE=http` y `EXPO_PUBLIC_AUTH_MODE=firebase` contra el backend real;
    ajustar detalles visuales contra los mockups.
-2. **Backend: vinculación del kit** — actualizar el diagrama de base de datos (Figura 3.8) y el
-   modelo con los cambios de [`docs/vinculacion-kit.md`](docs/vinculacion-kit.md) (KIT,
-   `Residente.telefono`, resolución de eventos, `Familiar.push_token`), y sumar `GET/POST /me`, `POST /kits/vincular`,
-   cámaras y residente.
-3. **Backend: el resto de los endpoints** (lista y forma propuesta en
+2. **Backend: el resto de los endpoints** (lista y forma propuesta en
    [`src/api/README.md`](src/api/README.md)): marcar alerta como resuelta, `ubicacion` en el
    evento, resumen de rutina, filtros por tipo/fecha (RF13).
-4. **Firebase:** crear el proyecto (runbook en `cloud/README.md` del Backend, "Cómo seguir" →
-   punto 2) y conectar el login real ([`src/features/auth/README.md`](src/features/auth/README.md)).
-5. **Push (RF8):** pasar a *development build*, registrar el token del celular en el backend
+3. **Push (RF8):** pasar a *development build*, registrar el token del celular en el backend
    (`cloud/README.md` → punto 3) y abrir el detalle de la alerta al tocar la notificación.
-6. **App:** editar residente y cámaras desde Perfil e invitar familiares que ya tienen cuenta
+4. **App:** editar residente y cámaras desde Perfil e invitar familiares que ya tienen cuenta
    (RF12).
-7. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
+5. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

@@ -222,7 +222,7 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
     kit: { numero_serie: KITS_DEMO[0].serie, cantidad_camaras: KITS_DEMO[0].cantidadCamaras },
     camaras: Object.entries(CAMARAS).map(([id, ubicacion]) => ({
       id: Number(id),
-      local_id: `cam${id}`,
+      identificador_local: `cam${id}`,
       ubicacion,
       activa: true,
     })),
@@ -351,7 +351,7 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
         // cliente); al vincular pasan al hogar y solo falta la ubicación.
         camaras: Array.from({ length: kit.cantidadCamaras }, (_, i) => ({
           id: siguienteCamara++,
-          local_id: `cam${i + 1}`,
+          identificador_local: `cam${i + 1}`,
           ubicacion: null,
           activa: true,
         })),
