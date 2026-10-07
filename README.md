@@ -25,7 +25,7 @@ del residente.
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
 | Notificaciones push (Firebase Cloud Messaging) | ⏳ Pendiente — requiere *development build* (no anda en Expo Go) |
-| Conexión al backend real | ✅ Endpoints de `GET /me` a `marcarResuelta` implementados en `http.ts` (2026-10-07); falta el resumen de rutina y mandar los filtros RF13 (ver [`src/api/README.md`](src/api/README.md)) |
+| Conexión al backend real | ✅ Los 8 métodos de `Api` implementados en `http.ts` (2026-10-07); falta mandar los filtros RF13 al pedir eventos (ver [`src/api/README.md`](src/api/README.md)) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
 | Crear cuenta + vinculación del kit por QR + configuración inicial (residente, cámaras) | ✅ Hecho en la app (mock y backend real) ([`docs/vinculacion-kit.md`](docs/vinculacion-kit.md)) |
@@ -406,8 +406,39 @@ celular contra el backend real; resumen de rutina y push tokens (ver `src/api/RE
 - Verificado: `npm run typecheck` y `npm run lint` sin errores.
 
 **Pendiente:** la app todavía no manda los filtros `tipo`/`desde`/`hasta` al pedir eventos
-(sigue pidiendo los últimos 200 y filtrando local); resumen de rutina y push tokens siguen sin
-implementar en el backend.
+(sigue pidiendo los últimos 200 y filtrando local); push tokens siguen sin implementar en el
+backend.
+
+### 2026-10-07 — Resumen de rutina real (`GET /hogares/{id}/rutina`)
+
+**Qué se hizo**
+- **Backend (`cloud/app/rutina.py`, nuevo):** calcula el resumen de rutina al vuelo sobre
+  `Evento` (sin leer `LineaBaseComportamiento`, que sigue sin escribirse) con mediana + MAD —
+  misma convención estadística que `baseline/src/class_deviations.py`. Solo dos indicadores:
+  `comida` (horario de la primera comida/toma del día, clase `cam_comida`) y `sedentarismo`
+  (minutos/día sentado, `cam_descanso_sofa` + `cam_ocio_sentado`). Ventanas rolling (`hoy`,
+  últimos 7 u últimos 30 días), igual al criterio que ya usa `ReportesScreen.tsx`.
+- **`http.ts`:** `obtenerResumenRutina` deja de ser `pendiente(...)` — ya no queda ningún método
+  de `Api` sin implementar contra el backend real.
+- Probado con un smoke test (eventos sintéticos, 20+ días de historial, contra SQLite) — sin
+  probar contra Postgres ni con datos de cámara reales.
+- Verificado: `npm run typecheck` y `npm run lint` sin errores.
+
+**Decisiones**
+- **Sin `"despertar"`.** El mock lo mostraba, pero no hay clase de cámara que detecte
+  despertarse (sin sensor de cama, ver `camera_events.py::CAMERA_ACTIVITY_MAP`) —
+  `features/reportes/README.md` ya lo marcaba como pendiente de definir con el backend antes de
+  esta sesión. Mostrarlo habría sido un dato inventado (`CLAUDE.md`: "no inventar campos,
+  verificar en el backend").
+- **No se reusó `timing_deviations.score_timing_deviations`.** Ese módulo es un detector: solo
+  devuelve filas para eventos que ya se salen de lo habitual, no "el valor de hoy + el rango
+  habitual" para mostrar siempre. Para una sola clase sin ocurrencias cerca de medianoche, un
+  cálculo directo (sin el clustering circular completo) es más simple y más fácil de auditar.
+- **Umbrales sin calibrar con datos reales de cámara** (no existen aún, mismo disclaimer que el
+  resto de `baseline/`): punto de partida razonable, no un resultado medido.
+
+**Pendiente:** push tokens (backend); mandar los filtros RF13 al pedir eventos del período;
+probar el resumen de rutina con datos de cámara reales y desde la app en un celular.
 
 ---
 
@@ -418,11 +449,11 @@ En orden sugerido:
 1. **Actualizar Node a 22 LTS** y **probar la app en los celulares** de los dos con Expo Go,
    con `EXPO_PUBLIC_API_MODE=http` y `EXPO_PUBLIC_AUTH_MODE=firebase` contra el backend real;
    ajustar detalles visuales contra los mockups.
-2. **Backend: el resto de los endpoints** (lista y forma propuesta en
-   [`src/api/README.md`](src/api/README.md)): marcar alerta como resuelta, `ubicacion` en el
-   evento, resumen de rutina, filtros por tipo/fecha (RF13).
-3. **Push (RF8):** pasar a *development build*, registrar el token del celular en el backend
-   (`cloud/README.md` → punto 3) y abrir el detalle de la alerta al tocar la notificación.
+2. **App: mandar los filtros RF13** (`tipo`/`desde`/`hasta`, ya existen en el backend) al pedir
+   eventos, en vez de pedir los últimos 200 y filtrar local (ver [`src/api/README.md`](src/api/README.md)).
+3. **Push (RF8):** sumar `POST /me/push-token` en el backend (`cloud/README.md` → punto 3),
+   pasar a *development build*, registrar el token del celular y abrir el detalle de la alerta
+   al tocar la notificación.
 4. **App:** editar residente y cámaras desde Perfil e invitar familiares que ya tienen cuenta
    (RF12).
 5. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a

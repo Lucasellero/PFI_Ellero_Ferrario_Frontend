@@ -22,16 +22,20 @@ Pestaña Reportes. Cubre **RF9** (reportes periódicos del estado y la rutina) a
 
 ## Estado
 
-- Los indicadores son **datos de prueba**: el backend todavía no expone la línea base (ver
-  `src/api/README.md`, `GET /hogares/{id}/rutina`). Los indicadores del mock (despertar, primera
-  comida, sedentarismo) son los de ejemplo del mockup; el informe aclara que se pueden sumar
-  otros a medida que la línea base se enriquezca.
-- Los eventos salen de la misma lista que el home (últimos 200), así que "Mes" puede quedar
-  incompleto en un hogar con mucha actividad hasta que el backend tenga filtros por fecha.
+- **Backend real conectado (2026-10-07):** `GET /hogares/{id}/rutina` existe (`cloud/app/rutina.py`)
+  y devuelve solo **dos** indicadores — `comida` (horario de la primera comida/toma del día) y
+  `sedentarismo` (minutos/día sentado sin actividad) — contra el historial real de `Evento` del
+  propio residente (mediana + MAD, sin leer `LineaBaseComportamiento`, que sigue sin escribirse).
+  **`"despertar"` se sacó**, como ya anticipaba el punto de "Pendiente" de abajo: no hay clase de
+  cámara que detecte despertarse (sin sensor de cama), así que mostrarlo habría sido un dato
+  inventado. Solo probado con un smoke test (eventos sintéticos contra SQLite) — sin probar con
+  datos de cámara reales ni desde la app en un celular.
+- Los eventos del período siguen saliendo de la misma lista que el home (últimos 200) — el
+  backend ya tiene filtros `tipo`/`desde`/`hasta` (RF13) pero esta pantalla todavía no los manda.
 
 ## Pendiente
 
-- Definir con el backend qué indicadores puede calcular hoy `baseline/` con las 5 clases de
-  cámara que existen (`cam_cocina`, `cam_comida`, `cam_descanso_sofa`, `cam_ocio_sentado`,
-  `cam_moverse`). "Despertar" no tiene todavía una clase de cámara que lo detecte.
-- Filtro por tipo de evento (RF13).
+- Mandar `desde`/`hasta` del período elegido al pedir eventos (RF13) en vez de filtrar los
+  últimos 200 del lado del cliente.
+- Probar el resumen de rutina con datos de cámara reales (no calibrado todavía, ver disclaimer
+  en `cloud/app/rutina.py`) y desde la app en un celular.

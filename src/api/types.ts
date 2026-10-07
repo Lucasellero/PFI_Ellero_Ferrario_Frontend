@@ -165,7 +165,10 @@ export interface DatosResidente {
 
 export type Periodo = 'hoy' | 'semana' | 'mes';
 
-/** PENDIENTE BACKEND: indicadores de rutina vs. línea base del residente (pantalla Reportes). */
+/** Indicador de rutina vs. historial del residente (pantalla Reportes, `GET /hogares/{id}/rutina`).
+ * Solo dos claves hoy: `"comida"` y `"sedentarismo"` — son las únicas que `cloud/app/rutina.py`
+ * puede calcular de verdad con lo que ve una sola cámara (sin sensor de cama, no hay
+ * `"despertar"` como mostraba el mock). */
 export interface IndicadorRutina {
   clave: string;
   titulo: string;

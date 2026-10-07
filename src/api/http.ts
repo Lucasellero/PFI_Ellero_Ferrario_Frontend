@@ -6,7 +6,7 @@ import { API_URL } from '@/config';
 
 import type { Api } from './client';
 import { ApiError } from './errors';
-import type { Camara, Evento, KitVinculado, Perfil } from './types';
+import type { Camara, Evento, KitVinculado, Perfil, ResumenRutina } from './types';
 
 export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
   async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -27,10 +27,6 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
     return (res.status === 204 ? undefined : await res.json()) as T;
   }
 
-  function pendiente(endpoint: string): never {
-    throw new ApiError(501, `${endpoint} todavía no existe en el backend (ver src/api/README.md)`);
-  }
-
   return {
     obtenerPerfil: () => request<Perfil>('/me'),
     crearPerfil: (datos) => request<Perfil>('/me', { method: 'POST', body: JSON.stringify(datos) }),
@@ -38,7 +34,8 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
       request<Evento[]>(`/hogares/${hogarId}/eventos?limit=${limit}`),
     marcarResuelta: (hogarId, eventoId) =>
       request<void>(`/hogares/${hogarId}/eventos/${eventoId}/resolver`, { method: 'POST' }),
-    obtenerResumenRutina: async () => pendiente('resumen de rutina'),
+    obtenerResumenRutina: (hogarId, periodo) =>
+      request<ResumenRutina>(`/hogares/${hogarId}/rutina?periodo=${periodo}`),
     // Vinculación del kit: contrato en docs/vinculacion-kit.md.
     vincularKit: (codigo) =>
       request<KitVinculado>('/kits/vincular', { method: 'POST', body: JSON.stringify({ codigo }) }),

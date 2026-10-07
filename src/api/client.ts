@@ -12,21 +12,22 @@ import type { Camara, DatosResidente, Evento, KitVinculado, Perfil, Periodo, Res
 export type TokenProvider = () => Promise<string | null>;
 
 export interface Api {
-  /** PENDIENTE BACKEND: `GET /me`. */
+  /** `GET /me`. */
   obtenerPerfil(): Promise<Perfil>;
   /**
-   * PENDIENTE BACKEND: `POST /me` — crea el `Familiar` de la cuenta recién registrada en
-   * Firebase (el backend saca `firebase_uid` y `email` del token; la app manda el nombre).
+   * `POST /me` — crea el `Familiar` de la cuenta recién registrada en Firebase (el backend saca
+   * `firebase_uid` y `email` del token; la app manda el nombre).
    */
   crearPerfil(datos: { nombre: string }): Promise<Perfil>;
-  /** `GET /hogares/{id}/eventos?limit=` (existe). */
+  /** `GET /hogares/{id}/eventos?limit=`. */
   listarEventos(hogarId: number, opciones?: { limit?: number }): Promise<Evento[]>;
-  /** PENDIENTE BACKEND: marcar una alerta como atendida. */
+  /** `POST /hogares/{id}/eventos/{evento_id}/resolver`. */
   marcarResuelta(hogarId: number, eventoId: number): Promise<void>;
-  /** PENDIENTE BACKEND: indicadores de rutina vs. línea base. */
+  /** `GET /hogares/{id}/rutina?periodo=`: indicadores de rutina vs. historial del residente.
+   * Lista vacía si todavía no hay suficiente historial (ver `cloud/app/rutina.py`). */
   obtenerResumenRutina(hogarId: number, periodo: Periodo): Promise<ResumenRutina>;
 
-  // ── Vinculación del kit (todo PENDIENTE BACKEND — ver docs/vinculacion-kit.md) ──
+  // ── Vinculación del kit (ver docs/vinculacion-kit.md) ──────────────────────────
   /**
    * `POST /kits/vincular` con el código del QR. Crea el hogar (si el kit no tenía) y deja al
    * familiar como `responsable_principal`. Errores: 404 código inexistente, 409 kit ya

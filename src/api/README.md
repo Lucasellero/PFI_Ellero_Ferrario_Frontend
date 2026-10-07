@@ -40,7 +40,7 @@
 | `marcarResuelta` | `POST /hogares/{id}/eventos/{evento_id}/resolver` | ✅ Existe e implementado en `http.ts` (2026-10-07). Cualquier familiar vinculado, idempotente |
 | — | campo `ubicacion` en `EventoOut` | ✅ Existe (2026-10-07). Join con `Camara.ubicacion`, `null` si no vino de una cámara o no se cargó |
 | — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend (2026-10-07). **La app todavía no los usa** — sigue pidiendo los últimos 200 y filtrando local |
-| `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` (propuesto) | ❌ **Falta.** Necesita exponer la línea base de `baseline/` — `LineaBaseComportamiento` existe en el modelo pero `baseline_runner.py` todavía no la escribe |
+| `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo 2 indicadores (`comida`, `sedentarismo`) calculados al vuelo sobre `Evento` — ver `cloud/app/rutina.py`. Sin `"despertar"`: no hay clase de cámara que lo detecte |
 | — | `POST /me/push-token` (RF8) | ❌ **Falta.** Diseño en `cloud/README.md` → "Cómo seguir" punto 3; decidido: columna `push_token` (null) en `Familiar` (ver `docs/vinculacion-kit.md`) |
 
 **Vinculación del kit:** contrato completo (bodies, respuestas, errores 404/409/429, qué hace
@@ -94,8 +94,7 @@ backend porque es el que conoce la línea base; si se prefiere mandar números c
 
 ## Pendiente
 
-- `obtenerResumenRutina` en `http.ts`: sigue en `pendiente(...)` (`ApiError` 501) hasta que el
-  backend escriba la línea base.
+- `http.ts` ya implementa los 8 métodos de `Api` — no queda ningún `pendiente(...)`.
 - Pasar `listarEventos` a mandar los filtros `tipo`/`desde`/`hasta` que ya acepta el backend
   (RF13) en vez de pedir los últimos 200 y filtrar del lado del cliente.
 - Probar el modo `http` desde la app en un celular (hoy solo probado con `TestClient` del lado
