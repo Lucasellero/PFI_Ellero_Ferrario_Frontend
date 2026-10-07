@@ -2,8 +2,9 @@
  * Tipos de la API cloud (repo Backend, `cloud/app/schemas.py`). Mantener sincronizado a mano
  * con el backend: si cambia `EventoOut` allá, cambia acá.
  *
- * Los campos/tipos marcados "PENDIENTE BACKEND" todavía no existen en `cloud/` — hoy solo los
- * sirve el mock (`src/api/mock.ts`). Ver la tabla de endpoints en src/api/README.md.
+ * Convención: un campo o tipo marcado "PENDIENTE BACKEND" todavía no existe en `cloud/` — hoy
+ * solo lo sirve el mock (`src/api/mock.ts`). Al 2026-10-07 no queda ninguno (ver la tabla de
+ * endpoints en src/api/README.md) — se deja la convención para la próxima vez que haga falta.
  */
 
 /** `events/schema.py::EventType` del backend. */

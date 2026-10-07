@@ -49,6 +49,7 @@ Crear una cuenta nueva desde el Login y usar los códigos de prueba de `src/api/
 
 ## Pendiente
 
-- Endpoints en el backend (`PENDIENTE BACKEND`, ver `docs/vinculacion-kit.md`).
-- Editar la ubicación de las cámaras y el residente después, desde Perfil.
-- Invitar a otros familiares (RF12) desde Perfil.
+Nada — los endpoints del backend, editar residente/cámaras y la gestión de familiares (RF12)
+ya están hechos, en `features/perfil/` (`EditarResidenteScreen`, `EditarCamarasScreen`,
+`FamiliaresScreen`, 2026-10-07). Este flujo sigue siendo solo para la **configuración inicial**
+(primera vez que se vincula un kit); para editar después, ver `features/perfil/README.md`.

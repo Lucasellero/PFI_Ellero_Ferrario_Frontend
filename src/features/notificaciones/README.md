@@ -40,6 +40,5 @@ recarga; además la lista se actualiza sola cada 30 s y al volver a la app (ver
 
 ## Pendiente
 
-- Abrir este detalle directamente al tocar una notificación push.
-- "Marcar como resuelta" y el teléfono del residente dependen de endpoints que el backend no
-  tiene todavía (ver `src/api/README.md`).
+- Abrir este detalle directamente al tocar una notificación push (depende del *development
+  build*, ver `features/auth/README.md`).

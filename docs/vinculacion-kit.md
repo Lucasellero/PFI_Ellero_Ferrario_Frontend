@@ -4,12 +4,16 @@ Cómo un familiar que recibe un kit Lares lo conecta con su cuenta, qué ya est�
 qué tiene que hacer el backend y **qué cambia en el diagrama de base de datos del informe**
 (Figura 3.8, "Diagrama de base de datos en la nube").
 
-> Estado (2026-10-04): la app tiene todo el flujo hecho y funcionando contra el **mock**. El
-> backend todavía no tiene ninguno de los endpoints de este documento (`PENDIENTE BACKEND`).
+> Estado (2026-10-04): la app tiene todo el flujo hecho y funcionando contra el **mock**.
 >
 > Actualizado (2026-10-05) con las decisiones tomadas al pasarlo al informe: push en FAMILIAR,
 > sin INVITACION, `direccion` opcional, sin verificación de mail (proveedores permitidos), wifi
 > validado para 3 cámaras, RF10 redefinido y RF14 nuevo.
+>
+> Actualizado (2026-10-07): el backend ya tiene todos los endpoints de este documento
+> (`cloud/app/routers/kits.py`, `mobile.py`, `familiares.py`), probados de punta a punta contra
+> Postgres real con un ID token de Firebase real — ver `cloud/README.md`. La app ya los consume
+> en modo `http` (`src/api/http.ts`).
 
 ---
 

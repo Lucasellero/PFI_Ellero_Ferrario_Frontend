@@ -43,4 +43,7 @@ const { refrescando, onRefrescar } = useRecargaManual(); // "tirar para actualiz
 ## Pendiente
 
 - Refrescar al recibir una push (RF8); con eso, el intervalo de 30 s puede espaciarse o quitarse.
-- Paginación / filtros por fecha cuando el backend los soporte (RF13); hoy trae los últimos 200.
+- Paginación cuando un hogar acumule mucha más actividad que los últimos 200. El backend ya
+  tiene filtros `tipo`/`desde`/`hasta` (RF13, 2026-10-07) — a propósito no se usan acá: este
+  contexto es el feed general reciente (home, badge, "última actividad" del detalle), no un
+  listado por período; `features/reportes` sí los usa para el suyo.
