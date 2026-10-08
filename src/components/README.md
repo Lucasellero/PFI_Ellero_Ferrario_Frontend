@@ -8,7 +8,7 @@ sabe qué es un "evento" o una "alerta", no va acá sino en la feature correspon
 |---|---|
 | `Boton` | Botón con variantes `primario` (verde), `peligro` (rojo sólido, ej. "Llamar a Rosa") y `secundario` (solo borde, ej. "Marcar como resuelta"). Soporta `cargando`. |
 | `Chip` | Chip de filtro ("Todas", "Urgentes", "Semana"...), con punto de color opcional. |
-| `EncabezadoPantalla` | Sobretítulo gris + título grande + círculo con la inicial del residente. |
+| `EncabezadoPantalla` | Sobretítulo gris + título grande + círculo con la inicial del residente, o un ícono de acción a la derecha en su lugar (prop `accion`, ej. cerrar sesión en Perfil, 2026-10-08) — uno u otro, no los dos juntos todavía. |
 | `EstadoCarga` | Pantalla completa de "cargando" o "error + Reintentar". |
 | `CampoTexto` | Campo de formulario: label + input con ícono + error (borde rojo y mensaje) o ayuda debajo. El error se anuncia al lector de pantalla. Acepta `ref` para pasar el foco al siguiente campo. |
 | `BarraSuperior` | Barra de las pantallas fuera de las pestañas: "Volver" (o el texto que se pase, ej. "Cerrar sesión") y el indicador "Paso 2 de 3". |

@@ -15,6 +15,7 @@ import type { Api } from './client';
 import { ApiError } from './errors';
 import type {
   Camara,
+  ClaveIndicadorRutina,
   Evento,
   EventoMetadata,
   EventType,
@@ -22,8 +23,10 @@ import type {
   KitResumen,
   Perfil,
   Periodo,
+  PuntoSerieRutina,
   Residente,
   ResumenRutina,
+  SerieRutina,
 } from './types';
 
 const LATENCIA_MS = 400;
@@ -157,33 +160,87 @@ function generarEventos(): Evento[] {
   return eventos;
 }
 
+// "despertar" no se incluye: el backend real nunca lo manda (sin detección de cama/sueño con una
+// sola cámara, ver docstring de cloud/app/rutina.py) — el mock tiene que reflejar lo que la app
+// puede recibir de verdad, no lo que mostraba el mockup original.
 const RESUMENES: Record<Periodo, ResumenRutina> = {
   hoy: {
     periodo: 'hoy',
     indicadores: [
-      { clave: 'despertar', titulo: 'Despertar', valor: 'Hoy 7:35', habitual: 'habitual 7:00–7:45', estado: 'ok' },
       { clave: 'comida', titulo: 'Primera comida', valor: 'Hoy 9:10', habitual: 'habitual 8:00–9:30', estado: 'ok' },
       { clave: 'sedentarismo', titulo: 'Sedentarismo', valor: '3 h sin moverse', habitual: 'habitual 1 h por día', estado: 'desvio' },
+      { clave: 'cocina', titulo: 'Cocina', valor: '20 min cocinando', habitual: 'habitual 35 min por día', estado: 'ok' },
+      { clave: 'movilidad', titulo: 'Movilidad', valor: '10 min en movimiento', habitual: 'habitual 40 min por día', estado: 'desvio' },
     ],
   },
   semana: {
     periodo: 'semana',
     indicadores: [
-      { clave: 'despertar', titulo: 'Despertar', valor: 'Promedio 7:30', habitual: 'habitual 7:00–7:45', estado: 'ok' },
       { clave: 'comida', titulo: 'Primera comida', valor: 'Promedio 9:00', habitual: 'habitual 8:00–9:30', estado: 'ok' },
       { clave: 'sedentarismo', titulo: 'Sedentarismo', valor: '2 h 10 min por día', habitual: 'habitual 1 h por día', estado: 'desvio' },
+      { clave: 'cocina', titulo: 'Cocina', valor: '28 min por día', habitual: 'habitual 35 min por día', estado: 'ok' },
+      { clave: 'movilidad', titulo: 'Movilidad', valor: '22 min por día', habitual: 'habitual 40 min por día', estado: 'desvio' },
     ],
   },
   mes: {
     periodo: 'mes',
     indicadores: [
-      { clave: 'despertar', titulo: 'Despertar', valor: 'Promedio 7:25', habitual: 'habitual 7:00–7:45', estado: 'ok' },
       { clave: 'comida', titulo: 'Primera comida', valor: 'Promedio 8:50', habitual: 'habitual 8:00–9:30', estado: 'ok' },
       { clave: 'sedentarismo', titulo: 'Sedentarismo', valor: '1 h 20 min por día', habitual: 'habitual 1 h por día', estado: 'ok' },
+      { clave: 'cocina', titulo: 'Cocina', valor: '33 min por día', habitual: 'habitual 35 min por día', estado: 'ok' },
+      { clave: 'movilidad', titulo: 'Movilidad', valor: '34 min por día', habitual: 'habitual 40 min por día', estado: 'ok' },
     ],
   },
 };
 
+const DIAS_PERIODO: Record<Periodo, number> = { hoy: 1, semana: 7, mes: 30 };
+
+function fechaIsoHaceNDias(dias: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - dias);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Serie día por día para el gráfico de Reportes — mismos valores "habituales" que `RESUMENES`,
+ * con una tendencia que empeora acercándose a hoy (para que el gráfico cuente algo con sentido
+ * en el modo demo, no puntos al azar). */
+function serieRutinaMock(clave: ClaveIndicadorRutina, periodo: Periodo): SerieRutina {
+  const dias = DIAS_PERIODO[periodo];
+  if (clave === 'comida') {
+    const habitual = 8 * 60 + 45; // 08:45
+    const limite_inferior = 8 * 60;
+    const limite_superior = 9 * 60 + 30;
+    const puntos: PuntoSerieRutina[] = Array.from({ length: dias }, (_, idx) => {
+      const i = dias - 1 - idx; // i=0 es hoy
+      const valor = habitual + Math.round(20 * Math.sin(i * 0.9));
+      const estado = valor < limite_inferior || valor > limite_superior ? 'desvio' : 'ok';
+      return { fecha: fechaIsoHaceNDias(i), valor, estado };
+    });
+    return { clave, periodo, unidad: 'hora', habitual, limite_inferior, limite_superior, puntos };
+  }
+  // `sedentarismo`: empeora con el tiempo (más sentado = desvío, exceso); `cocina`/`movilidad`:
+  // mismo criterio pero el desvío es quedarse por DEBAJO de lo habitual (déficit).
+  const PARAMS: Record<'sedentarismo' | 'cocina' | 'movilidad', { habitual: number; valorHoy: number; direccion: 'exceso' | 'deficit' }> = {
+    sedentarismo: { habitual: 60, valorHoy: 180, direccion: 'exceso' },
+    cocina: { habitual: 35, valorHoy: 10, direccion: 'deficit' },
+    movilidad: { habitual: 40, valorHoy: 10, direccion: 'deficit' },
+  };
+  const { habitual, valorHoy, direccion } = PARAMS[clave];
+  const limite = direccion === 'exceso' ? habitual + 30 : Math.max(habitual - 30, 0);
+  const puntos: PuntoSerieRutina[] = Array.from({ length: dias }, (_, idx) => {
+    const i = dias - 1 - idx;
+    const progreso = dias === 1 ? 1 : (dias - 1 - i) / (dias - 1); // 0 (más viejo) -> 1 (hoy)
+    const valor = Math.round(habitual + progreso * (valorHoy - habitual));
+    const estado = (direccion === 'exceso' ? valor > limite : valor < limite) ? 'desvio' : 'ok';
+    return { fecha: fechaIsoHaceNDias(i), valor, estado };
+  });
+  return {
+    clave, periodo, unidad: 'minutos', habitual,
+    limite_inferior: direccion === 'deficit' ? limite : null,
+    limite_superior: direccion === 'exceso' ? limite : null,
+    puntos,
+  };
+}
 
 /** Lo que el backend guardaría por hogar (tablas HOGAR, RESIDENTE, CAMARA, EVENTO). */
 interface HogarMock {
@@ -352,6 +409,15 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
       const h = await hogarAutorizado(hogarId);
       // Un hogar recién vinculado todavía no tiene línea base: los primeros días no hay rangos.
       return h.conLineaBase ? RESUMENES[periodo] : { periodo, indicadores: [] };
+    },
+
+    async obtenerSerieRutina(hogarId, indicador, periodo) {
+      await esperar();
+      const h = await hogarAutorizado(hogarId);
+      return h.conLineaBase
+        ? serieRutinaMock(indicador, periodo)
+        : { clave: indicador, periodo, unidad: indicador === 'comida' ? 'hora' : 'minutos',
+            habitual: null, limite_inferior: null, limite_superior: null, puntos: [] };
     },
 
     async vincularKit(codigo) {

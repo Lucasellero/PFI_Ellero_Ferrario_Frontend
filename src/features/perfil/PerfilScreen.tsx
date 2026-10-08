@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Boton } from '@/components/Boton';
 import { Chip } from '@/components/Chip';
 import { EncabezadoPantalla } from '@/components/EncabezadoPantalla';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -38,7 +37,11 @@ export function PerfilScreen() {
   return (
     <SafeAreaView style={styles.pantalla} edges={['top']}>
       <ScrollView contentContainerStyle={styles.contenido}>
-        <EncabezadoPantalla sobretitulo={perfil?.familiar.email ?? ''} titulo={perfil?.familiar.nombre ?? 'Perfil'} />
+        <EncabezadoPantalla
+          sobretitulo={perfil?.familiar.email ?? ''}
+          titulo={perfil?.familiar.nombre ?? 'Perfil'}
+          accion={{ icono: 'log-out', onPress: cerrarSesion, accessibilityLabel: 'Cerrar sesión' }}
+        />
 
         {hogar && (
           <View style={styles.card}>
@@ -105,8 +108,6 @@ export function PerfilScreen() {
             eventos detectados.
           </Text>
         </View>
-
-        <Boton label="Cerrar sesión" variante="secundario" onPress={cerrarSesion} />
 
         {API_MODE === 'mock' && (
           <Text style={[typography.pequeno, styles.centrado]}>Modo demo · datos de prueba</Text>

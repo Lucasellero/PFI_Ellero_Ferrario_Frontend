@@ -39,8 +39,9 @@
 | `guardarResidente` | `PUT /hogares/{id}/residente` | ✅ Existe e implementado en `http.ts` (2026-10-07) |
 | `marcarResuelta` | `POST /hogares/{id}/eventos/{evento_id}/resolver` | ✅ Existe e implementado en `http.ts` (2026-10-07). Cualquier familiar vinculado, idempotente |
 | — | campo `ubicacion` en `EventoOut` | ✅ Existe (2026-10-07). Join con `Camara.ubicacion`, `null` si no vino de una cámara o no se cargó |
-| — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend y `listarEventos` ya los acepta (2026-10-07). `features/reportes` manda `desde` por período; nadie manda `tipo`/`hasta` todavía |
-| `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo 2 indicadores (`comida`, `sedentarismo`) calculados al vuelo sobre `Evento` — ver `cloud/app/rutina.py`. Sin `"despertar"`: no hay clase de cámara que lo detecte |
+| — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend y `listarEventos` ya los acepta. `features/reportes` manda `desde` por período y `tipo` por chip (2026-10-08); `hasta` sigue sin usarse |
+| `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` | ✅ Existe e implementado en `http.ts` (2026-10-07). **4 indicadores** (`comida`, `sedentarismo`, `cocina`, `movilidad` — los 2 últimos sumados 2026-10-08) calculados al vuelo sobre `Evento` — ver `cloud/app/rutina.py`. Sin `"despertar"`: no hay clase de cámara que lo detecte |
+| `obtenerSerieRutina` | `GET /hogares/{id}/rutina/serie?indicador=&periodo=` | ✅ Existe e implementado en `http.ts` (2026-10-08). Mismo indicador día por día, para el gráfico de evolución de `features/reportes` (`GraficoIndicador.tsx`) |
 | — | `POST /me/push-token` (RF8) | ✅ Existe en el backend (2026-10-07, body `{token}`, 204). **La app todavía no lo llama ni recibe push**: requiere *development build* para obtener un token de FCM real — no anda en Expo Go (ver `features/auth/README.md`, "Si se pasa a development build") |
 | `listarFamiliares` | `GET /hogares/{id}/familiares` | ✅ Existe e implementado en `http.ts` (2026-10-07, RF12). Cualquier familiar vinculado |
 | `invitarFamiliar` | `POST /hogares/{id}/familiares` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo `responsable_principal`; 404 si el email no tiene cuenta todavía |
@@ -102,9 +103,9 @@ backend porque es el que conoce la línea base; si se prefiere mandar números c
 
 ## Pendiente
 
-- `http.ts` ya implementa los 8 métodos de `Api` — no queda ningún `pendiente(...)`.
-- `listarEventos` ya acepta `tipo`/`desde`/`hasta` (RF13, usado por `features/reportes`); ningún
-  otro lugar los manda todavía (`features/hogar/HogarProvider.tsx` sigue pidiendo los últimos
-  200 sin filtro, que es lo que necesita el feed general).
-- Probar el modo `http` desde la app en un celular (hoy solo probado con `TestClient` del lado
-  del backend).
+- `http.ts` ya implementa los 14 métodos de `Api` — no queda ningún `pendiente(...)`.
+- `listarEventos` ya acepta `tipo`/`desde`/`hasta` (RF13); `features/reportes` manda `desde` y
+  `tipo` (2026-10-08). `hasta` sigue sin usarse en ningún lado. `features/hogar/HogarProvider.tsx`
+  sigue pidiendo los últimos 200 sin filtro, a propósito — es lo que necesita el feed general.
+- ~~Probar el modo `http` desde la app en un celular~~ — hecho 2026-10-07/08, ver "Prueba
+  end-to-end en celular real" en el README del repo.

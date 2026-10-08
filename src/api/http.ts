@@ -6,7 +6,9 @@ import { API_URL } from '@/config';
 
 import type { Api } from './client';
 import { ApiError } from './errors';
-import type { Camara, Evento, FamiliarVinculado, KitVinculado, Perfil, ResumenRutina } from './types';
+import type {
+  Camara, Evento, FamiliarVinculado, KitVinculado, Perfil, ResumenRutina, SerieRutina,
+} from './types';
 
 export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
   async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -41,6 +43,8 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
       request<void>(`/hogares/${hogarId}/eventos/${eventoId}/resolver`, { method: 'POST' }),
     obtenerResumenRutina: (hogarId, periodo) =>
       request<ResumenRutina>(`/hogares/${hogarId}/rutina?periodo=${periodo}`),
+    obtenerSerieRutina: (hogarId, indicador, periodo) =>
+      request<SerieRutina>(`/hogares/${hogarId}/rutina/serie?indicador=${indicador}&periodo=${periodo}`),
     // Vinculación del kit: contrato en docs/vinculacion-kit.md.
     vincularKit: (codigo) =>
       request<KitVinculado>('/kits/vincular', { method: 'POST', body: JSON.stringify({ codigo }) }),

@@ -193,3 +193,30 @@ export interface ResumenRutina {
   periodo: Periodo;
   indicadores: IndicadorRutina[];
 }
+
+/** Mismas claves que puede traer `IndicadorRutina.clave` — ver `GET /hogares/{id}/rutina/serie`
+ * y `cloud/app/rutina.py::CLAVES_INDICADOR`. */
+export const CLAVES_INDICADOR_RUTINA = ['comida', 'sedentarismo', 'cocina', 'movilidad'] as const;
+export type ClaveIndicadorRutina = (typeof CLAVES_INDICADOR_RUTINA)[number];
+
+export interface PuntoSerieRutina {
+  fecha: string; // "AAAA-MM-DD"
+  /** `null` = sin datos ese día (no se inventa un valor). Minuto del día (`comida`, 0-1439) o
+   * minutos de duración (`sedentarismo`), según `unidad`. */
+  valor: number | null;
+  estado: 'ok' | 'desvio' | 'sin_dato';
+}
+
+/** Mismo indicador que `ResumenRutina`, pero un punto por día para graficar (eje X = fecha, eje
+ * Y = `valor`) en vez de un resumen de texto. `habitual`/`limite_*` están en la misma unidad que
+ * `puntos[].valor`. Para indicadores de una sola dirección (`sedentarismo`: solo exceso;
+ * `cocina`/`movilidad`: solo déficit) uno de los dos límites viene `null`. */
+export interface SerieRutina {
+  clave: ClaveIndicadorRutina;
+  periodo: Periodo;
+  unidad: 'hora' | 'minutos';
+  habitual: number | null;
+  limite_inferior: number | null;
+  limite_superior: number | null;
+  puntos: PuntoSerieRutina[];
+}

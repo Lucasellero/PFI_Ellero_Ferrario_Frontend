@@ -7,8 +7,8 @@ import { API_MODE } from '@/config';
 import { crearHttpApi } from './http';
 import { crearMockApi } from './mock';
 import type {
-  Camara, DatosResidente, Evento, EventType, FamiliarVinculado, KitVinculado, Perfil, Periodo,
-  ResumenRutina,
+  Camara, ClaveIndicadorRutina, DatosResidente, Evento, EventType, FamiliarVinculado, KitVinculado,
+  Perfil, Periodo, ResumenRutina, SerieRutina,
 } from './types';
 
 /** Devuelve el ID token de Firebase del usuario logueado (en modo mock, un token de prueba). */
@@ -33,6 +33,10 @@ export interface Api {
   /** `GET /hogares/{id}/rutina?periodo=`: indicadores de rutina vs. historial del residente.
    * Lista vacía si todavía no hay suficiente historial (ver `cloud/app/rutina.py`). */
   obtenerResumenRutina(hogarId: number, periodo: Periodo): Promise<ResumenRutina>;
+  /** `GET /hogares/{id}/rutina/serie?indicador=&periodo=`: mismo indicador día por día, para el
+   * gráfico de Reportes (eje X = fecha, eje Y = valor, con la línea de lo habitual y los
+   * límites de desvío). */
+  obtenerSerieRutina(hogarId: number, indicador: ClaveIndicadorRutina, periodo: Periodo): Promise<SerieRutina>;
 
   // ── Vinculación del kit (ver docs/vinculacion-kit.md) ──────────────────────────
   /**

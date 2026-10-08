@@ -389,9 +389,9 @@ invitar familiares (RF12).
   los tipos que reexporta `firebase/auth`. Se verificó contra el código fuente del paquete
   instalado antes de aplicar el workaround, no se adivinó.
 
-**Pendiente:** probar todo el flujo (login Firebase + vinculación + eventos) desde la app en un
-celular contra el backend real; resumen de rutina y push tokens (ver `src/api/README.md` y
-`cloud/README.md` del Backend).
+**Pendiente:** push tokens (ver `src/api/README.md` y `cloud/README.md` del Backend). El flujo
+completo (login Firebase + vinculación + eventos + resumen de rutina) ya se probó en un celular
+real — ver "Prueba end-to-end en celular real" más abajo.
 
 ### 2026-10-07 — Resolver alertas, ubicación en eventos y filtros RF13
 
@@ -406,9 +406,9 @@ celular contra el backend real; resumen de rutina y push tokens (ver `src/api/RE
   `PENDIENTE BACKEND` — el backend siempre los manda ahora.
 - Verificado: `npm run typecheck` y `npm run lint` sin errores.
 
-**Pendiente:** la app todavía no manda los filtros `tipo`/`desde`/`hasta` al pedir eventos
-(sigue pidiendo los últimos 200 y filtrando local); push tokens siguen sin implementar en el
-backend.
+**Pendiente:** push tokens siguen sin implementar en el backend. ~~la app todavía no manda los
+filtros `tipo`/`desde`/`hasta`~~ — `tipo` conectado 2026-10-08, ver esa fecha más abajo; `hasta`
+sigue sin usarse.
 
 ### 2026-10-07 — Resumen de rutina real (`GET /hogares/{id}/rutina`)
 
@@ -438,8 +438,8 @@ backend.
 - **Umbrales sin calibrar con datos reales de cámara** (no existen aún, mismo disclaimer que el
   resto de `baseline/`): punto de partida razonable, no un resultado medido.
 
-**Pendiente:** push tokens (backend); probar el resumen de rutina con datos de cámara reales y
-desde la app en un celular.
+**Pendiente:** push tokens (backend); calibrar el resumen de rutina con datos de cámara reales
+(hoy sigue probado solo con sintético/CASAS, ver "Prueba end-to-end en celular real" más abajo).
 
 ### 2026-10-07 — Push tokens y alertas agudas en el backend (RF8)
 
@@ -470,8 +470,8 @@ de forma útil (sin token real que mandar), así que queda documentado en
   actividad" en el detalle) sigue sin filtro, como corresponde a un feed reciente.
 - Verificado: `npm run typecheck` y `npm run lint` sin errores.
 
-**Pendiente:** nadie manda `tipo`/`hasta` todavía (solo `desde`); evaluar si hace falta un
-filtro por tipo de evento en la UI de Reportes.
+**Pendiente:** ~~nadie manda `tipo`/`hasta` todavía~~ — `tipo` conectado 2026-10-08 con chips
+Todos/Caídas/Inmovilidad/Rutina en Reportes (ver esa fecha más abajo); `hasta` sigue sin usarse.
 
 ### 2026-10-07 — Editar residente/cámaras y gestión de familiares desde Perfil (RF12)
 
@@ -497,8 +497,9 @@ filtro por tipo de evento en la UI de Reportes.
 desvincularse del único hogar llama `recargarPerfil()` en vez de `cerrarSesion()`, para que el
 layout raíz pase solo a la vinculación con el perfil ya actualizado.
 
-**Pendiente:** probar las tres pantallas desde la app en un celular; preferencias de
-notificación; selector de hogar (si un familiar llega a tener más de uno).
+**Pendiente:** preferencias de notificación; selector de hogar (si un familiar llega a tener más
+de uno). Las tres pantallas ya se probaron en un celular real — ver "Prueba end-to-end en
+celular real" más abajo.
 
 ### 2026-10-07 — Actualizar Node
 
@@ -508,6 +509,54 @@ unsupported" al correr `typecheck`/`lint`/`expo export`. No hizo falta reinstala
 `node_modules` ni cambió nada de comportamiento — verificado `npm run typecheck` y
 `npm run lint` sin errores con la versión nueva.
 
+### 2026-10-08 — Prueba end-to-end en celular real
+
+**Qué se hizo:** primera prueba completa de la app contra el backend real, no contra mocks ni
+smoke tests. `.env.local` apuntado al deploy de AWS (`EXPO_PUBLIC_API_MODE=http`,
+`EXPO_PUBLIC_AUTH_MODE=firebase`, ver `cloud/README.md` "Desplegar a AWS"). Desde un celular con
+Expo Go, conectado al bundler de esta PC:
+
+- Cuenta real creada con Firebase Authentication (`lucasellero2004@gmail.com`).
+- Vinculación de un kit real contra la base de AWS — el kit de prueba (`LR-000001`) se creó con
+  `alta_kit.py` corriendo contra RDS (acceso público habilitado un momento para esto, revertido
+  enseguida; ver "Desplegar a AWS" en `cloud/README.md`).
+- Residente configurado, sesión completa hasta el Home.
+- 151 eventos sintéticos (21 días de rutina + una caída confirmada + inmovilidad de severidad
+  alta) mandados directo a `POST /devices/events` con la API key del kit, para tener algo real
+  que ver en el feed y suficiente historial para el resumen de rutina.
+- Confirmado desde el celular: feed con la caída/inmovilidad, "Marcar como resuelta", resumen de
+  rutina en Reportes (con desvío de sedentarismo marcado a propósito), filtros por período, y las
+  tres pantallas de Perfil (editar residente, editar cámaras, familiares) — todo funcionando.
+
+**No cubierto por esta prueba:** push notifications (sigue bloqueado por *development build*,
+ver "Próximos pasos" → punto 2) y HTTPS (decisión tomada de no hacerlo para esta etapa, ver
+`cloud/README.md`).
+
+### 2026-10-08 (2) — Filtro por tipo, gráfico de evolución y 2 indicadores nuevos en Reportes
+
+**Qué se hizo** (detalle completo en `src/features/reportes/README.md`):
+- **RF13, `tipo`:** chips Todos/Caídas/Inmovilidad/Rutina en Reportes, conectados a
+  `api.listarEventos(hogarId, { tipo })` — ya no trae todos los tipos mezclados.
+- **Gráfico de evolución**: nuevo `GraficoIndicador.tsx` (línea con `react-native-svg`, recién
+  agregado a `package.json`) — un punto por día, línea de lo habitual y marca los días de desvío.
+  Un chip por indicador para elegir cuál graficar (solo uno a la vez). Pide `GET
+  /hogares/{id}/rutina/serie`, endpoint nuevo del lado del backend (`cloud/app/rutina.py`, ver
+  `cloud/README.md`). Dos vueltas de diseño: la primera (pestañas superpuestas tipo separador de
+  cuaderno, a pedido del usuario) no se vio bien en un celular real — texto cortado, hueco con la
+  tarjeta de abajo —, se simplificó a los mismos chips que ya usan Período/Tipo.
+- **2 indicadores nuevos**: `cocina` y `movilidad` (antes solo `comida`/`sedentarismo`), mismo
+  patrón backend. `ClaveIndicadorRutina` en `src/api/types.ts` ahora tiene 4 valores.
+- **Ícono de cerrar sesión** (`EncabezadoPantalla`, nuevo prop `accion`): en Perfil pasó de ser un
+  botón al final de la pantalla a un ícono (`log-out` de Feather) arriba a la derecha del
+  encabezado, a pedido del usuario.
+- Verificado: `npm run typecheck`, `npm run lint` y `npx expo export --platform android` sin
+  errores. Probado en el celular real contra el backend ya desplegado (`cloud/README.md`, deploys
+  `v3`/`v4`).
+
+**Pendiente:** ninguno nuevo — los indicadores `cocina`/`movilidad` comparten las mismas
+limitaciones ya documentadas (sin calibrar con cámara real, texto "0 min" si los eventos de
+prueba no tienen heartbeats).
+
 ---
 
 ## Próximos pasos
@@ -515,11 +564,9 @@ unsupported" al correr `typecheck`/`lint`/`expo export`. No hizo falta reinstala
 En orden sugerido:
 
 1. ~~Actualizar Node~~ ✅ (2026-10-07, `v24.19.0` vía `winget install OpenJS.NodeJS.LTS` — ya
-   no hace falta exactamente "22", alcanza con cualquier LTS ≥20.19.4). **Probar la app en los
-   celulares** de los dos con Expo Go, con `EXPO_PUBLIC_API_MODE=http` y
-   `EXPO_PUBLIC_AUTH_MODE=firebase` contra el backend real; ajustar detalles visuales contra los
-   mockups. Esto cubriría de una las tres pantallas nuevas de Perfil (editar residente/cámaras,
-   familiares) y el login real, ninguno probado todavía en un celular.
+   no hace falta exactamente "22", alcanza con cualquier LTS ≥20.19.4). ~~Probar la app en los
+   celulares con Expo Go contra el backend real~~ ✅ (2026-10-08, ver "Prueba end-to-end en
+   celular real" más abajo).
 2. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
    rutina y en caídas/inmovilidad (`cloud/README.md` → punto 3, 2026-10-07). Falta: pasar a
    *development build* (no anda en Expo Go), registrar el token del celular al loguearse y
