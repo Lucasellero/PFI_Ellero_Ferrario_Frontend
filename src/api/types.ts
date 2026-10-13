@@ -10,7 +10,12 @@
 /** `events/schema.py::EventType` del backend. */
 export type EventType = 'fall' | 'immobility' | 'activity' | 'routine_deviation';
 
-/** Categorías de actividad que emite `vlm/` (`vlm/src/clip_classifier.py::CATEGORY_DESCRIPTIONS`). */
+/**
+ * Categorías de actividad que emite `vlm/` (`vlm/src/clip_classifier.py::CATEGORY_DESCRIPTIONS`),
+ * más `LeaveHome`/`EnterHome`: salidas y entradas de casa que la controladora detecta por la zona
+ * `puerta` de la cámara (`runner/door_events.py` del backend, 2026-10-13). Una cámara sin esa zona
+ * configurada no las emite.
+ */
 export type ActivityLabel =
   | 'Cooking'
   | 'EatingDrinkingMedication'
@@ -18,6 +23,8 @@ export type ActivityLabel =
   | 'ReadingScreen'
   | 'Moving'
   | 'Phone'
+  | 'LeaveHome'
+  | 'EnterHome'
   | 'Background';
 
 /**
@@ -60,7 +67,7 @@ export interface RoutineDeviationMetadata {
   detector?: 'multivariado' | 'clase' | 'timing' | 'tendencia';
   clave?: string;
   fecha?: string;
-  /** Clase de `baseline/`, ej. "cam_cocina", "cam_comida", "cam_descanso_sofa". */
+  /** Clase de `baseline/`, ej. "cam_cocina", "cam_comida", "cam_descanso_sofa", "cam_salir_casa". */
   clase?: string;
   // detector "clase"
   tipo?: 'ausencia' | 'ausencia_sostenida' | 'exceso' | 'deficit';
