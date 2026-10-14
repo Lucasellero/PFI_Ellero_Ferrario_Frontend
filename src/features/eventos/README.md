@@ -40,6 +40,13 @@ Notas:
 - Los desvíos de rutina se traducen según `metadata.detector` (`timing`, `clase`, `tendencia`,
   `multivariado`) y `metadata.clase` (`cam_cocina`, `cam_comida`...), que son los que emite
   `cloud/app/baseline_runner.py`.
+- **Entradas y salidas de casa (2026-10-13)**: el backend suma dos etiquetas de actividad,
+  `LeaveHome` ("Salió de casa") y `EnterHome` ("Entró a casa"), y dos clases de rutina,
+  `cam_salir_casa` y `cam_entrar_casa`. Solo llegan si la cámara del hogar tiene configurada la
+  zona de la puerta. De esas dos clases el backend solo emite que falten, nunca de horario:
+  `ausencia` el primer día ("Hoy no se registró ninguna salida de casa", desde la segunda
+  votación de parámetros del 2026-10-13) y `ausencia_sostenida` del segundo en adelante
+  ("Varios días sin salir de casa"). Verificado con `npm run typecheck` y `npm run lint`.
 
 ## Qué se oculta del feed
 
