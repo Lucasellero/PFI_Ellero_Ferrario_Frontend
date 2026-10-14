@@ -47,6 +47,15 @@ const CLASES_RUTINA: Record<string, string> = {
 /** Entradas y salidas son eventos puntuales: se cuentan veces, no tiempo. */
 const CLASES_PUNTUALES = new Set(['cam_salir_casa', 'cam_entrar_casa']);
 
+/**
+ * Un solo día sin salir o sin entrar (`tipo: "ausencia"`, que el backend emite para estas dos
+ * clases desde el 2026-10-13). Texto propio: "Hoy no se registró salir de casa" no se entiende.
+ */
+const SIN_EVENTOS_HOY: Record<string, string> = {
+  cam_salir_casa: 'Hoy no se registró ninguna salida de casa',
+  cam_entrar_casa: 'Hoy no se registró ninguna entrada a casa',
+};
+
 const enLugar = (e: Evento) => (e.ubicacion ? ` en ${e.ubicacion.toLowerCase()}` : '');
 
 function desvioDeRutina(e: Evento): PresentacionEvento {
@@ -68,7 +77,7 @@ function desvioDeRutina(e: Evento): PresentacionEvento {
     case 'clase': {
       const puntual = m.clase != null && CLASES_PUNTUALES.has(m.clase);
       const textos: Record<string, string> = {
-        ausencia: `Hoy no se registró ${actividad}`,
+        ausencia: (m.clase && SIN_EVENTOS_HOY[m.clase]) ?? `Hoy no se registró ${actividad}`,
         ausencia_sostenida: `Varios días sin ${actividad}`,
         exceso: puntual ? `Más veces de lo habitual: ${actividad}` : `Más tiempo de lo habitual en ${actividad}`,
         deficit: puntual ? `Menos veces de lo habitual: ${actividad}` : `Menos tiempo de lo habitual en ${actividad}`,

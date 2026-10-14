@@ -43,9 +43,10 @@ Notas:
 - **Entradas y salidas de casa (2026-10-13)**: el backend suma dos etiquetas de actividad,
   `LeaveHome` ("Salió de casa") y `EnterHome` ("Entró a casa"), y dos clases de rutina,
   `cam_salir_casa` y `cam_entrar_casa`. Solo llegan si la cámara del hogar tiene configurada la
-  zona de la puerta. De esas dos clases el backend solo emite un desvío: `ausencia_sostenida`
-  ("Varios días sin salir de casa"); nunca de horario. Sin verificar con `tsc` en la máquina
-  donde se hizo el cambio (no tenía `node_modules`): correr `npm run typecheck`.
+  zona de la puerta. De esas dos clases el backend solo emite que falten, nunca de horario:
+  `ausencia` el primer día ("Hoy no se registró ninguna salida de casa", desde la segunda
+  votación de parámetros del 2026-10-13) y `ausencia_sostenida` del segundo en adelante
+  ("Varios días sin salir de casa"). Verificado con `npm run typecheck` y `npm run lint`.
 
 ## Qué se oculta del feed
 
