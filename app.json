@@ -7,7 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "lares",
     "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "ar.edu.uade.lares"
+    },
     "android": {
+      "package": "ar.edu.uade.lares",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FDFBF8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -38,6 +43,14 @@
             "backgroundColor": "#111815",
             "image": "./assets/images/splash-icon-dark.png"
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#1F5D4B",
+          "defaultChannel": "alertas"
         }
       ]
     ],

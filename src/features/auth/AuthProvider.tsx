@@ -190,6 +190,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
 
     async cerrarSesion() {
+      // PENDIENTE BACKEND: borrar el token de push del familiar (no hay `DELETE /me/push-token`
+      // y `POST` no acepta token vacío). Hasta entonces, este celular sigue recibiendo las
+      // alertas de la cuenta después de cerrar sesión. Ver src/features/push/README.md.
       if (AUTH_MODE === 'firebase') {
         await signOut(obtenerAuth());
         return;

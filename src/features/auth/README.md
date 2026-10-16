@@ -83,11 +83,16 @@ el error aparece debajo del campo (`CampoTexto`) y se anuncia al lector de panta
 método (`iniciarSesion`, etc.) bifurca internamente — así no se violan las reglas de hooks de
 React por un hook condicional.
 
-## Si se pasa a development build (por las push)
+## Development build (por las push)
 
-Evaluar migrar a `@react-native-firebase/auth` + `messaging`, un solo SDK nativo para login y
-push, que es lo que describe literalmente el informe (cap. 4). Gracias a `useAuth()` las
-pantallas no cambian.
+Las push se hicieron con `expo-notifications` (2026-10-15, solo Android; ver
+`features/push/README.md`), así que **el login no cambia**: sigue con el SDK web de Firebase,
+que anda igual en Expo Go y en el development build. Si más adelante se suma iOS con
+`@react-native-firebase/messaging`, se puede evaluar pasar también el login a
+`@react-native-firebase/auth` (un solo SDK nativo, como describe el informe en el cap. 4);
+gracias a `useAuth()` las pantallas no cambiarían.
+
+**Cerrar sesión no borra el token de push** (PENDIENTE BACKEND, ver `cerrarSesion`).
 
 ## Decisiones tomadas
 

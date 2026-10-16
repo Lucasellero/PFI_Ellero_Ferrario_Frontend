@@ -42,7 +42,9 @@
 | — | filtros `tipo`, `desde`, `hasta` en `/eventos` (RF13) | ✅ Existe en el backend y `listarEventos` ya los acepta. `features/reportes` manda `desde` por período y `tipo` por chip (2026-10-08); `hasta` sigue sin usarse |
 | `obtenerResumenRutina` | `GET /hogares/{id}/rutina?periodo=hoy\|semana\|mes` | ✅ Existe e implementado en `http.ts` (2026-10-07). **4 indicadores** (`comida`, `sedentarismo`, `cocina`, `movilidad` — los 2 últimos sumados 2026-10-08) calculados al vuelo sobre `Evento` — ver `cloud/app/rutina.py`. Sin `"despertar"`: no hay clase de cámara que lo detecte |
 | `obtenerSerieRutina` | `GET /hogares/{id}/rutina/serie?indicador=&periodo=` | ✅ Existe e implementado en `http.ts` (2026-10-08). Mismo indicador día por día, para el gráfico de evolución de `features/reportes` (`GraficoIndicador.tsx`) |
-| — | `POST /me/push-token` (RF8) | ✅ Existe en el backend (2026-10-07, body `{token}`, 204). **La app todavía no lo llama ni recibe push**: requiere *development build* para obtener un token de FCM real — no anda en Expo Go (ver `features/auth/README.md`, "Si se pasa a development build") |
+| `registrarPushToken` | `POST /me/push-token` (RF8) | ✅ Existe (2026-10-07, body `{token}`, 204) e implementado en `http.ts` (2026-10-15). Lo llama `features/push/usePush.ts` con el token de FCM, solo en Android con *development build* (no anda en Expo Go). Sin probar en un celular todavía |
+| — | `evento_id` y `hogar_id` en la `data` de la push | ❌ **PENDIENTE BACKEND.** Hoy la push trae `{event_type}` (caídas/inmovilidad) o el detalle del desvío. Con los dos ids, tocar la notificación abriría el detalle de esa alerta en vez del feed (ver `features/push/README.md`) |
+| — | Borrar el token al cerrar sesión (`DELETE /me/push-token`) | ❌ **PENDIENTE BACKEND.** Sin esto, después de cerrar sesión el celular sigue recibiendo las alertas de la cuenta (`POST` no acepta token vacío) |
 | `listarFamiliares` | `GET /hogares/{id}/familiares` | ✅ Existe e implementado en `http.ts` (2026-10-07, RF12). Cualquier familiar vinculado |
 | `invitarFamiliar` | `POST /hogares/{id}/familiares` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo `responsable_principal`; 404 si el email no tiene cuenta todavía |
 | `cambiarRolFamiliar` | `PATCH /hogares/{id}/familiares/{familiar_id}` | ✅ Existe e implementado en `http.ts` (2026-10-07). Solo `responsable_principal`; 409 si es el único |
@@ -103,7 +105,8 @@ backend porque es el que conoce la línea base; si se prefiere mandar números c
 
 ## Pendiente
 
-- `http.ts` ya implementa los 14 métodos de `Api` — no queda ningún `pendiente(...)`.
+- `http.ts` ya implementa los 15 métodos de `Api` (el último, `registrarPushToken`, 2026-10-15)
+  — no queda ningún `pendiente(...)`.
 - `listarEventos` ya acepta `tipo`/`desde`/`hasta` (RF13); `features/reportes` manda `desde` y
   `tipo` (2026-10-08). `hasta` sigue sin usarse en ningún lado. `features/hogar/HogarProvider.tsx`
   sigue pidiendo los últimos 200 sin filtro, a propósito — es lo que necesita el feed general.

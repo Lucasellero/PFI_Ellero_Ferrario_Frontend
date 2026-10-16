@@ -17,6 +17,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { EstadoCarga } from '@/components/EstadoCarga';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { CuentaProvider, useCuenta } from '@/features/cuenta/CuentaProvider';
+import { usePush } from '@/features/push/usePush';
 import { spacing, TemaProvider, useTema } from '@/theme';
 
 export default function RootLayout() {
@@ -32,13 +33,17 @@ export default function RootLayout() {
 }
 
 function Navegacion() {
-  const { cerrarSesion } = useAuth();
+  const { usuario, cerrarSesion } = useAuth();
   const { etapa, error, recargarPerfil } = useCuenta();
   const { colors, esquema } = useTema();
 
   const enVinculacion = etapa === 'sin-hogar' || etapa === 'configurando';
   // Mientras carga el perfil (o falló) sigue disponible el login, tapado por la capa de abajo.
   const sinCuentaLista = etapa === 'sin-sesion' || etapa === 'cargando' || etapa === 'error';
+
+  // Push (RF8): el token se registra apenas hay perfil, aunque falte vincular el kit — así el
+  // backend ya puede avisarle cuando el hogar empiece a mandar eventos.
+  usePush({ uid: usuario?.uid, conPerfil: enVinculacion || etapa === 'lista', enPestanas: etapa === 'lista' });
 
   return (
     <>

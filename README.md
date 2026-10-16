@@ -24,7 +24,7 @@ del residente.
 | Pantallas de los mockups (Login, Notificaciones, Detalle de alerta, Reportes, Día en orden) + Perfil | ✅ Hechas, con datos de prueba |
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
-| Notificaciones push (Firebase Cloud Messaging) | ⏳ Backend listo (`POST /me/push-token`, push en desvíos y en caídas/inmovilidad) — falta todo del lado de la app, requiere *development build* (no anda en Expo Go) |
+| Notificaciones push (Firebase Cloud Messaging) | 🧪 Código hecho en la app (2026-10-15, solo Android, `expo-notifications`) — **sin probar en un celular**: falta `google-services.json` y el primer *development build*. Pasos en [`src/features/push/README.md`](src/features/push/README.md) |
 | Conexión al backend real | ✅ Los 12 métodos de `Api` implementados en `http.ts`, filtros RF13 conectados en Reportes (2026-10-07) — ver [`src/api/README.md`](src/api/README.md) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
@@ -57,13 +57,13 @@ Definida en el informe (cap. 3, sección "Branding"). Lo que usa la app:
 | Lenguaje | **TypeScript** | Los tipos de la API (`src/api/types.ts`) calcan los del backend, así el editor marca cualquier campo mal escrito antes de correr la app. |
 | Navegación | **Expo Router** (rutas por archivos en `src/app/`) | Lo estándar en Expo hoy. |
 | Login | **Firebase Authentication** (email + contraseña) | Definido en el informe (cap. 4). Hoy mockeado. |
-| Push | **Firebase Cloud Messaging** | Definido en el informe (RF8). Hoy pendiente. |
+| Push | **Firebase Cloud Messaging**, recibidas con `expo-notifications` | Definido en el informe (RF8). Solo Android por ahora (ver [`src/features/push/README.md`](src/features/push/README.md)). |
 | Íconos | `@expo/vector-icons` (set Feather) | Incluido en Expo Go; el estilo de línea coincide con los mockups. |
 
-**Expo Go vs. development build:** todo lo que hay hoy corre en **Expo Go**. Cuando se sumen
-las push (FCM) va a hacer falta un *development build* (un "Expo Go propio" de la app, se
-instala una vez en el celular y después se trabaja igual). Está anotado en
-[Próximos pasos](#próximos-pasos).
+**Expo Go vs. development build:** todo corre en **Expo Go** menos las push (FCM), que
+necesitan un *development build* (un "Expo Go propio" de la app, se instala una vez en el
+celular y después se trabaja igual). En Expo Go la app anda igual, solo que no registra token
+ni recibe push. Cómo armarlo: [`src/features/push/README.md`](src/features/push/README.md).
 
 ---
 
@@ -78,7 +78,8 @@ npm install
 npx expo start
 ```
 
-Escanear el QR con Expo Go (Android) o con la cámara (iOS).
+Escanear el QR con Expo Go (Android) o con la cámara (iOS). Para probar las push hace falta el
+*development build* en vez de Expo Go: ver [`src/features/push/README.md`](src/features/push/README.md).
 
 **Probar en modo demo:**
 - **Cuenta con datos:** `ana.gomez@mail.com` con cualquier contraseña de 6 o más caracteres →
@@ -128,7 +129,8 @@ src/
 │   ├── eventos/          Lógica común de eventos: severidad, textos, formato, tarjeta, detalle
 │   ├── notificaciones/   Home: estado del día, filtros, feed
 │   ├── reportes/         Rutina vs. lo habitual + eventos del período
-│   └── perfil/           Datos de la cuenta, cerrar sesión
+│   ├── perfil/           Datos de la cuenta, cerrar sesión
+│   └── push/             Notificaciones push (RF8): token de FCM, canal, tocar una notificación
 ├── components/           Componentes visuales genéricos (Botón, Chip, CampoTexto, BarraSuperior...)
 ├── lib/                  Utilidades sin interfaz (validaciones de formularios)
 ├── api/                  Acceso a datos: tipos, cliente HTTP, mock
@@ -140,7 +142,7 @@ docs/                     Diseños que cruzan app y backend (ej. vinculacion-kit
 ```
 
 **Regla de dependencias:** `app/` → `features/` → `components/`, `lib/`, `api/`, `theme/`. Una
-feature puede usar `auth/`, `cuenta/`, `eventos/` y `hogar/` (son compartidas); el resto de las
+feature puede usar `auth/`, `cuenta/`, `eventos/`, `hogar/` y `push/` (son compartidas); el resto de las
 features no se importan entre sí. Ninguna pantalla llama a `fetch` directo: todo pasa por `src/api`.
 
 ---
@@ -557,6 +559,42 @@ ver "Próximos pasos" → punto 2) y HTTPS (decisión tomada de no hacerlo para 
 limitaciones ya documentadas (sin calibrar con cámara real, texto "0 min" si los eventos de
 prueba no tienen heartbeats).
 
+### 2026-10-15 — Notificaciones push en la app (RF8, solo Android)
+
+**Qué se hizo** (detalle y pasos de configuración en
+[`src/features/push/README.md`](src/features/push/README.md)):
+- Nuevo `features/push/`: crea el canal `alertas`, pide permiso, obtiene el token de FCM y lo
+  manda a `POST /me/push-token` (nuevo `api.registrarPushToken`, también en el mock) apenas
+  hay perfil; lo reenvía si FCM lo rota. Tocar una notificación abre el feed. Con la app
+  abierta la notificación se muestra igual y `HogarProvider` actualiza el feed en el momento.
+- `app.json`: `android.package`/`ios.bundleIdentifier` = `ar.edu.uade.lares`,
+  `android.googleServicesFile` y el plugin de `expo-notifications` (ícono monocromo, verde de
+  marca, canal por defecto `alertas`). Nuevo `eas.json` con perfiles `development` y `preview`
+  (APK, distribución interna).
+- Dependencias nuevas: `expo-notifications` y `expo-dev-client`. De paso, `npx expo install
+  --fix` subió 4 paquetes que estaban algunas versiones de parche atrás (`expo`,
+  `expo-linking`, `expo-router`, `expo-splash-screen`) para hacer el primer build alineado;
+  `expo-doctor` 21/21.
+- Verificado: `npm run typecheck`, `npm run lint` y `npx expo export --platform android` sin
+  errores. **No probado en un celular.**
+
+**Decisiones:**
+- **Solo Android por ahora**, decidido por el equipo. Por eso `expo-notifications` y no
+  `@react-native-firebase/messaging`: en Android ya da el token de FCM que espera el backend, es
+  el módulo de Expo y resuelve permisos, canal y toques sin otra librería. En iOS ese token es
+  de APNs y no sirve para `firebase-admin`; sumar iOS implica cambiar a RN Firebase o tocar el
+  backend, además de la cuenta paga de Apple Developer.
+- **Identificador `ar.edu.uade.lares`:** el equipo no tenía uno; se eligió este. Cambiarlo
+  antes de registrar la app Android en Firebase, después ya no se puede.
+- **`google-services.json` se commitea** (no es secreto, EAS Build lo necesita en el repo).
+- **Los 30 s de actualización del feed se mantienen** hasta probar las push.
+
+**Pendiente:** registrar la app Android en Firebase y commitear `google-services.json`;
+`eas init` + primer `eas build --profile development --platform android`; probar en un celular
+(pasos en el README del módulo). Dos **PENDIENTE BACKEND** nuevos en
+[`src/api/README.md`](src/api/README.md): `evento_id`/`hogar_id` en la push (para abrir la
+alerta exacta) y borrar el token al cerrar sesión.
+
 ---
 
 ## Próximos pasos
@@ -567,9 +605,10 @@ En orden sugerido:
    no hace falta exactamente "22", alcanza con cualquier LTS ≥20.19.4). ~~Probar la app en los
    celulares con Expo Go contra el backend real~~ ✅ (2026-10-08, ver "Prueba end-to-end en
    celular real" más abajo).
-2. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
-   rutina y en caídas/inmovilidad (`cloud/README.md` → punto 3, 2026-10-07). Falta: pasar a
-   *development build* (no anda en Expo Go), registrar el token del celular al loguearse y
-   abrir el detalle de la alerta al tocar la notificación.
+2. **Push (RF8):** el código ya está (2026-10-15, solo Android). Falta: registrar la app
+   Android en Firebase (`google-services.json`), `eas init` + primer development build y
+   probarlo en un celular — pasos en [`src/features/push/README.md`](src/features/push/README.md).
+   Después: abrir la alerta exacta al tocar la notificación y borrar el token al cerrar sesión
+   (los dos necesitan cambios en el backend), y decidir si se suma iOS.
 3. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

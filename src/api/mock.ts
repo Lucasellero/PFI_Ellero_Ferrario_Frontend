@@ -258,6 +258,8 @@ interface FamiliarMock {
   id: number;
   nombre: string;
   email: string;
+  /** `Familiar.push_token`: solo se guarda, el mock no manda push. */
+  pushToken?: string;
   /** Tabla HOGAR_FAMILIAR. */
   hogares: { hogarId: number; rol: string }[];
 }
@@ -383,6 +385,11 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
       const nuevo: FamiliarMock = { id: siguienteFamiliar++, nombre, email, hogares: [] };
       familiares.set(email, nuevo);
       return perfilDe(nuevo);
+    },
+
+    async registrarPushToken(token) {
+      await esperar();
+      (await familiarActual()).pushToken = token;
     },
 
     async listarEventos(hogarId, { limit = 200, tipo, desde, hasta } = {}) {

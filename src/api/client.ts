@@ -22,6 +22,12 @@ export interface Api {
    * `firebase_uid` y `email` del token; la app manda el nombre).
    */
   crearPerfil(datos: { nombre: string }): Promise<Perfil>;
+  /**
+   * `POST /me/push-token` con `{ token }` (token de FCM del celular, RF8). 204. Un token por
+   * familiar: pisa el anterior (si inicia sesión en otro celular, las push pasan a ese). 404 si
+   * la cuenta todavía no tiene perfil (`POST /me` primero).
+   */
+  registrarPushToken(token: string): Promise<void>;
   /** `GET /hogares/{id}/eventos?limit=&tipo=&desde=&hasta=` (RF13: `desde`/`hasta` ISO 8601,
    * acotan por `occurred_at`; sin ellos, los últimos `limit`). */
   listarEventos(

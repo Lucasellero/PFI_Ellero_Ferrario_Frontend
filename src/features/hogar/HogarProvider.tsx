@@ -3,16 +3,19 @@
  * las pestañas para que Notificaciones (y el badge de la pestaña) y Reportes lean la misma lista
  * sin pedirla dos veces. Ver src/features/hogar/README.md.
  */
+import * as Notifications from 'expo-notifications';
 import { createContext, use, useEffect, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
 import { api } from '@/api/client';
 import type { Evento, HogarResumen, Perfil } from '@/api/types';
 import { useCuenta } from '@/features/cuenta/CuentaProvider';
+import { PUSH_DISPONIBLE } from '@/features/push/push';
 
 /**
- * Cada cuánto se piden los eventos con la app abierta. Es el reemplazo provisorio de las push
- * (RF8): con FCM el aviso llega solo y esto puede espaciarse o quitarse.
+ * Cada cuánto se piden los eventos con la app abierta. Era el reemplazo provisorio de las push
+ * (RF8); ahora que llegan (solo Android, development build), sigue por Expo Go/iOS y porque el
+ * backend no manda push de todos los tipos de evento. Se puede espaciar una vez probadas.
  */
 const INTERVALO_ACTUALIZACION_MS = 30_000;
 
@@ -80,8 +83,8 @@ export function HogarProvider({ children }: { children: ReactNode }) {
     };
   }, [idInicial]);
 
-  // Actualización automática: cada 30 s con la app en primer plano, y apenas vuelve a primer
-  // plano (el familiar abre la app después de un rato). En segundo plano no consulta: iOS y
+  // Actualización automática: cada 30 s con la app en primer plano, apenas vuelve a primer
+  // plano (el familiar abre la app después de un rato, o tocó una push) y al llegar una push. En segundo plano no consulta: iOS y
   // Android pausan los timers igual, y así no gasta batería ni datos.
   // Es silenciosa: no muestra el spinner de "tirar para actualizar" y, si falla, deja la lista
   // que ya había (el próximo intento la corrige).
@@ -104,10 +107,14 @@ export function HogarProvider({ children }: { children: ReactNode }) {
         intervalo = setInterval(actualizar, INTERVALO_ACTUALIZACION_MS);
       }
     });
+    // Llegó una push con la app abierta: el evento ya está en el backend, traerlo sin esperar
+    // la próxima vuelta del intervalo.
+    const push = PUSH_DISPONIBLE ? Notifications.addNotificationReceivedListener(actualizar) : null;
     return () => {
       vigente = false;
       clearInterval(intervalo);
       suscripcion.remove();
+      push?.remove();
     };
   }, [hogarId]);
 
