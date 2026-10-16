@@ -7,8 +7,9 @@ momento (`POST /devices/events`) y desvíos de rutina con la corrida diaria
 consigue el token de FCM del celular, lo manda a `POST /me/push-token`, lo borra al cerrar
 sesión y abre la alerta que el familiar toca.
 
-**Estado (2026-10-15):** código hecho, typecheck/lint/export sin errores. **Todavía no se probó
-en un celular**: falta el `google-services.json` y el primer development build (pasos de abajo).
+**Estado (2026-10-16):** código hecho, typecheck/lint/export sin errores, app Android
+registrada en Firebase (`google-services.json` en la raíz). **Todavía no se probó en un
+celular**: falta el primer development build (pasos de abajo, desde el 3).
 
 | Archivo | Qué es |
 |---|---|
@@ -49,7 +50,9 @@ Las push **no andan en Expo Go**: hace falta un *development build*, una versió
 los módulos nativos de este proyecto que se instala una vez en el celular. Después se trabaja
 igual que con Expo Go (`npx expo start` y el celular se conecta al bundler).
 
-1. **Firebase — registrar la app Android** (una sola vez para todo el equipo). En la consola
+1. **Firebase — registrar la app Android** — ✅ hecho (2026-10-16, app id
+   `1:3916100752:android:439fbe21a23041da351415`, sin SHA-1: solo hace falta para login con
+   Google o teléfono). Para rehacerlo: En la consola
    del proyecto `pfi-ellero-ferrario` → Project settings → General → "Add app" → Android →
    package name **`ar.edu.uade.lares`** (tiene que ser igual a `android.package` de
    `app.json`). Bajar el `google-services.json` y ponerlo en la raíz de este repo. Se commitea:

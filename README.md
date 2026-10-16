@@ -24,7 +24,7 @@ del residente.
 | Pantallas de los mockups (Login, Notificaciones, Detalle de alerta, Reportes, Día en orden) + Perfil | ✅ Hechas, con datos de prueba |
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
-| Notificaciones push (Firebase Cloud Messaging) | 🧪 Código hecho en la app (2026-10-15, solo Android, `expo-notifications`) — **sin probar en un celular**: falta `google-services.json` y el primer *development build*. Pasos en [`src/features/push/README.md`](src/features/push/README.md) |
+| Notificaciones push (Firebase Cloud Messaging) | 🧪 Código hecho en la app (2026-10-15, solo Android, `expo-notifications`) y app Android registrada en Firebase (2026-10-16) — **sin probar en un celular**: falta el primer *development build*. Pasos en [`src/features/push/README.md`](src/features/push/README.md) |
 | Conexión al backend real | ✅ Los 12 métodos de `Api` implementados en `http.ts`, filtros RF13 conectados en Reportes (2026-10-07) — ver [`src/api/README.md`](src/api/README.md) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
@@ -622,6 +622,18 @@ punta.
 **Pendiente:** merge y deploy del backend (Lucas); lo demás sigue igual que en la entrada
 anterior (Firebase, `eas init`, development build, prueba en celular).
 
+### 2026-10-16 — App Android registrada en Firebase
+
+**Qué se hizo:** se registró la app Android `ar.edu.uade.lares` en el proyecto
+`pfi-ellero-ferrario` (junto a la app web `pfi-test` del login) y se commiteó el
+`google-services.json` en la raíz, que es a donde apunta `android.googleServicesFile` de
+`app.json`. Verificado que el archivo es de ese proyecto y de ese paquete.
+
+**Decisiones:** sin certificado SHA-1 (solo lo piden el login con Google o con teléfono; acá es
+email y contraseña). El archivo va en el repo: no es secreto y EAS Build lo necesita.
+
+**Pendiente:** `eas init` + primer development build y la prueba en un celular Android.
+
 ---
 
 ## Próximos pasos
@@ -632,9 +644,9 @@ En orden sugerido:
    no hace falta exactamente "22", alcanza con cualquier LTS ≥20.19.4). ~~Probar la app en los
    celulares con Expo Go contra el backend real~~ ✅ (2026-10-08, ver "Prueba end-to-end en
    celular real" más abajo).
-2. **Push (RF8):** el código ya está (2026-10-15, solo Android). Falta: registrar la app
-   Android en Firebase (`google-services.json`), `eas init` + primer development build y
-   probarlo en un celular — pasos en [`src/features/push/README.md`](src/features/push/README.md).
+2. **Push (RF8):** el código ya está (2026-10-15, solo Android). Falta: `eas init` + primer
+   development build y probarlo en un celular Android (la app ya está registrada en Firebase,
+   2026-10-16) — pasos en [`src/features/push/README.md`](src/features/push/README.md).
    El backend ya tiene borrar el token y los ids en la push (2026-10-15), pero falta mergear
    y desplegar esa rama. Después: decidir si se suma iOS.
 3. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
