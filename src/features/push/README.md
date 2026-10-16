@@ -62,7 +62,12 @@ igual que con Expo Go (`npx expo start` y el celular se conecta al bundler).
    `GOOGLE_APPLICATION_CREDENTIALS` apuntando a la clave de la cuenta de servicio (ver
    `cloud/README.md` → "Cómo seguir" → 2). Sin eso, `enviar_push_alerta` solo deja un warning
    en el log. El deploy de AWS ya lo tiene (es el mismo Firebase del login).
-3. **EAS** (cuenta gratis en expo.dev):
+3. **EAS** (cuenta gratis en expo.dev). `eas init` ✅ hecho (2026-10-16): proyecto
+   [`@totossjgod/lares`](https://expo.dev/accounts/totossjgod/projects/lares), en la cuenta
+   personal de Lorenzo (`owner` y `extra.eas.projectId` en `app.json`). Para que otro del equipo
+   haga builds, invitarlo desde expo.dev o pasar el proyecto a una organización. `eas init`
+   también copia a `app.json` campos que ya resuelven los plugins (`android.permissions`,
+   `extra.router`): se sacaron a mano.
    ```bash
    npx eas-cli@latest login
    npx eas-cli@latest init      # crea el proyecto en expo.dev y agrega extra.eas.projectId a app.json
