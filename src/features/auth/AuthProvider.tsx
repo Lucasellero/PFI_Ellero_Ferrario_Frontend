@@ -22,6 +22,7 @@ import { createContext, use, useEffect, useState, type ReactNode } from 'react';
 import { api, configurarTokenProvider } from '@/api/client';
 import { EMAIL_DEMO } from '@/api/mock';
 import { AUTH_MODE } from '@/config';
+import { dejarDeRecibirPush } from '@/features/push/push';
 import {
   validarConfirmacion,
   validarContrasenaNueva,
@@ -190,9 +191,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
 
     async cerrarSesion() {
-      // PENDIENTE BACKEND: borrar el token de push del familiar (no hay `DELETE /me/push-token`
-      // y `POST` no acepta token vacío). Hasta entonces, este celular sigue recibiendo las
-      // alertas de la cuenta después de cerrar sesión. Ver src/features/push/README.md.
+      // Antes de salir: sin esto, el celular seguiría recibiendo las alertas de la cuenta.
+      await dejarDeRecibirPush();
       if (AUTH_MODE === 'firebase') {
         await signOut(obtenerAuth());
         return;

@@ -40,6 +40,7 @@ recarga; además la lista se actualiza sola cada 30 s y al volver a la app (ver
 
 ## Pendiente
 
-- Abrir este detalle directamente al tocar una notificación push. Hoy tocarla abre el feed
-  (2026-10-15, `features/push/usePush.ts`); para abrir la alerta exacta falta que el backend
-  mande `evento_id`/`hogar_id` en la push (PENDIENTE BACKEND, ver `features/push/README.md`).
+- ~~Abrir este detalle directamente al tocar una notificación push~~ ✅ (2026-10-15): la
+  pantalla lee `?alerta=&hogar=` de la ruta (los pone `features/push/usePush.ts`) y abre el
+  detalle de ese evento apenas está en la lista. Necesita el backend con los ids en la push
+  (rama `push-token-evento-2026-10-15`, sin deploy todavía); sin ellos abre solo el feed.

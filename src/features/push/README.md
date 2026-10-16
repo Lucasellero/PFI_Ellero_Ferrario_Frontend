@@ -4,19 +4,24 @@ El celular del familiar recibe las alertas aunque tenga la app cerrada: caídas 
 momento (`POST /devices/events`) y desvíos de rutina con la corrida diaria
 (`baseline_runner.py`). Las manda el backend por **Firebase Cloud Messaging**
 (`cloud/app/notifications.py`, con `firebase-admin`). Esta carpeta hace la parte de la app:
-consigue el token de FCM del celular, lo manda a `POST /me/push-token` y reacciona cuando el
-familiar toca una notificación.
+consigue el token de FCM del celular, lo manda a `POST /me/push-token`, lo borra al cerrar
+sesión y abre la alerta que el familiar toca.
 
 **Estado (2026-10-15):** código hecho, typecheck/lint/export sin errores. **Todavía no se probó
 en un celular**: falta el `google-services.json` y el primer development build (pasos de abajo).
 
 | Archivo | Qué es |
 |---|---|
-| `push.ts` | Lógica sin React: si este build puede recibir push (`PUSH_DISPONIBLE`), canal de Android, permiso y token, y cómo se muestran con la app abierta. |
-| `usePush.ts` | Hook que usa el layout raíz (`src/app/_layout.tsx`): registra el token cuando hay perfil, lo vuelve a mandar si FCM lo rota, y al tocar una notificación lleva al feed. |
+| `push.ts` | Lógica sin React: si este build puede recibir push (`PUSH_DISPONIBLE`), canal de Android, permiso y token, cómo se muestran con la app abierta, y `dejarDeRecibirPush` (al cerrar sesión). |
+| `usePush.ts` | Hook que usa el layout raíz (`src/app/_layout.tsx`): registra el token cuando hay perfil, lo vuelve a mandar si FCM lo rota, y al tocar una notificación lleva al feed con esa alerta abierta. |
 
-Además, `features/hogar/HogarProvider.tsx` pide los eventos apenas llega una push con la app
-abierta (sin esperar la vuelta de 30 s).
+Fuera de esta carpeta:
+- `features/hogar/HogarProvider.tsx` pide los eventos apenas llega una push con la app abierta
+  (sin esperar la vuelta de 30 s).
+- `features/notificaciones/NotificacionesScreen.tsx` abre el detalle de la alerta que llega en
+  los parámetros `alerta`/`hogar` de la ruta.
+- `features/auth/AuthProvider.tsx` → `cerrarSesion` llama a `dejarDeRecibirPush` antes de
+  salir.
 
 ## Cómo funciona
 
@@ -29,10 +34,14 @@ abierta (sin esperar la vuelta de 30 s).
    rota con la app cerrada, se manda en el próximo inicio de la app (el effect corre de nuevo).
 4. Llega una push:
    - **App cerrada o en segundo plano:** Android la muestra en el canal `alertas`. Al tocarla,
-     la app abre en el feed (pestaña Notificaciones) y se actualiza sola al volver a primer
-     plano.
+     la app abre en el feed (pestaña Notificaciones) con el detalle de esa alerta encima
+     (`evento_id`/`hogar_id` de la `data`). El feed se actualiza solo al volver a primer plano y
+     el detalle aparece apenas el evento está en la lista.
    - **App abierta:** se muestra igual (banner + sonido, `configurarPresentacion`) y el feed
-     se actualiza en el momento.
+     se actualiza en el momento. Tocarla abre el detalle igual que arriba.
+5. Cierra sesión → `DELETE /me/push-token?token=<el de este celular>` y recién después sale.
+   El backend lo borra solo si coincide con el guardado: si el familiar ya entró desde otro
+   celular, no le corta las push a ese.
 
 ## Configurar para desarrollo (una vez por máquina / por proyecto)
 
@@ -72,7 +81,9 @@ igual que con Expo Go (`npx expo start` y el celular se conecta al bundler).
 3. Mandar un evento de caída a `POST /devices/events` con la API key del kit (como en la
    "Prueba end-to-end en celular real" del README raíz). Debería llegar "Posible caída
    detectada" con la app cerrada, abierta y en segundo plano.
-4. Tocar la notificación → la app abre en Notificaciones, con la caída arriba.
+4. Tocar la notificación → la app abre en Notificaciones con el detalle de la caída encima
+   (con el backend nuevo desplegado; si no, solo el feed).
+5. Cerrar sesión → `familiar.push_token` vuelve a `null` (también con el backend nuevo).
 
 ## Decisiones
 
@@ -105,18 +116,24 @@ igual que con Expo Go (`npx expo start` y el celular se conecta al bundler).
   hace falta que exista el `Familiar` en el backend.
 - **Los errores de registro no se muestran en pantalla:** solo `console.warn`. La app funciona
   igual sin push (el feed se actualiza cada 30 s) y se reintenta en el próximo inicio.
+- **El detalle de la alerta tocada sale de la ruta, no de un estado:** `usePush` navega a `/`
+  con `?alerta=<evento_id>&hogar=<hogar_id>` y la pantalla muestra ese evento si está en la
+  lista y el hogar es el activo (con otro hogar, solo el feed). Así funciona igual con la app
+  cerrada (el feed todavía está cargando cuando llega la navegación) y no hace falta un effect.
+  Al cerrar el detalle se limpian los parámetros.
+- **Cerrar sesión espera al `DELETE` como máximo 3 s** (`ESPERA_MAXIMA_BORRADO_MS`). Si falla o
+  no hay red, sale igual: el token queda hasta que otro inicio de sesión lo pise. Mientras
+  espera no se muestra nada en pantalla (normalmente son décimas de segundo).
 - **Se mantiene la actualización cada 30 s** del feed (`HogarProvider`): sigue haciendo falta
   en Expo Go/iOS, y el backend no manda push de todo (no hay push de actividad normal). Se
   puede espaciar una vez probadas las push.
 
 ## Pendiente
 
-- **PENDIENTE BACKEND — abrir la alerta tocada:** la push trae `data: {event_type}` (caídas e
-  inmovilidad) o el detalle del desvío, pero no `evento_id` ni `hogar_id`. Con esos dos, al
-  tocarla se abriría directo el detalle de esa alerta (`DetalleAlertaSheet`) en vez del feed.
-- **PENDIENTE BACKEND — borrar el token al cerrar sesión:** no hay `DELETE /me/push-token`
-  (y `POST` no acepta token vacío). Hoy, después de cerrar sesión ese celular sigue recibiendo
-  las alertas de la cuenta. Marcado en `features/auth/AuthProvider.tsx` → `cerrarSesion`.
+- **Desplegar el backend nuevo.** `DELETE /me/push-token` y los ids en la push están en la
+  rama `push-token-evento-2026-10-15` del Backend (2026-10-15, con pruebas), todavía sin merge
+  ni deploy a AWS. Mientras tanto la app anda igual: el `DELETE` da 405 y se ignora (el token
+  sigue quedando al cerrar sesión), y tocar una push abre solo el feed.
 - **Permiso rechazado:** mostrar en Perfil que las notificaciones están apagadas, con un botón
   a los ajustes del sistema (`Linking.openSettings()`). Va junto con las "Preferencias de
   notificación" de `features/perfil`.

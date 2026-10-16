@@ -92,7 +92,8 @@ que anda igual en Expo Go y en el development build. Si más adelante se suma iO
 `@react-native-firebase/auth` (un solo SDK nativo, como describe el informe en el cap. 4);
 gracias a `useAuth()` las pantallas no cambiarían.
 
-**Cerrar sesión no borra el token de push** (PENDIENTE BACKEND, ver `cerrarSesion`).
+**Cerrar sesión borra primero el token de push** de este celular (`dejarDeRecibirPush`, de
+`features/push/`, 2026-10-15): espera como máximo 3 s y sale igual si falla.
 
 ## Decisiones tomadas
 

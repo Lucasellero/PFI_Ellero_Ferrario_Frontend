@@ -595,6 +595,33 @@ prueba no tienen heartbeats).
 [`src/api/README.md`](src/api/README.md): `evento_id`/`hogar_id` en la push (para abrir la
 alerta exacta) y borrar el token al cerrar sesión.
 
+### 2026-10-15 (2) — Borrar el token al cerrar sesión y abrir la alerta tocada (RF8)
+
+**Qué se hizo:** los dos `PENDIENTE BACKEND` que había dejado la entrada anterior, de punta a
+punta.
+- **Backend** (rama `push-token-evento-2026-10-15` del repo Backend, **sin merge ni deploy**):
+  `DELETE /me/push-token?token=` (borra solo si es el token guardado) y `evento_id`/`hogar_id`
+  en la `data` de cada push, de caídas/inmovilidad y de desvíos de rutina. 8 pruebas nuevas,
+  135/135 pasando. Detalle en `cloud/README.md` → "Cómo seguir" → 3.
+- **App:** `cerrarSesion` llama a `DELETE /me/push-token` antes de salir (nuevo
+  `api.borrarPushToken`, espera máxima de 3 s), y tocar una notificación abre el detalle de
+  esa alerta en el feed (`?alerta=&hogar=` en la ruta, lo lee `NotificacionesScreen`).
+- Verificado: `npm run typecheck`, `npm run lint` y `npx expo export --platform android` sin
+  errores. No probado en un celular (sigue faltando el development build).
+
+**Decisiones:**
+- **El `DELETE` borra solo si el token coincide** con el guardado. Con un token por familiar,
+  si inició sesión en otro celular, cerrar sesión en el viejo no le corta las push al nuevo.
+  El token va como query param porque un `DELETE` con body no lo soportan bien todos los
+  clientes.
+- **El detalle de la alerta tocada sale de la ruta**, no de un estado: funciona igual con la app
+  cerrada, cuando el feed todavía está cargando.
+- **Compatible con el backend desplegado hoy:** sin el deploy, el `DELETE` da 405 y se ignora, y
+  una push sin ids abre solo el feed.
+
+**Pendiente:** merge y deploy del backend (Lucas); lo demás sigue igual que en la entrada
+anterior (Firebase, `eas init`, development build, prueba en celular).
+
 ---
 
 ## Próximos pasos
@@ -608,7 +635,7 @@ En orden sugerido:
 2. **Push (RF8):** el código ya está (2026-10-15, solo Android). Falta: registrar la app
    Android en Firebase (`google-services.json`), `eas init` + primer development build y
    probarlo en un celular — pasos en [`src/features/push/README.md`](src/features/push/README.md).
-   Después: abrir la alerta exacta al tocar la notificación y borrar el token al cerrar sesión
-   (los dos necesitan cambios en el backend), y decidir si se suma iOS.
+   El backend ya tiene borrar el token y los ids en la push (2026-10-15), pero falta mergear
+   y desplegar esa rama. Después: decidir si se suma iOS.
 3. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

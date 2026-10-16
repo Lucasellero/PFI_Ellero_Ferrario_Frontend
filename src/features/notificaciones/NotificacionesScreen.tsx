@@ -1,4 +1,5 @@
 import Feather from '@expo/vector-icons/Feather';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +36,9 @@ export function NotificacionesScreen() {
   const { refrescando, onRefrescar } = useRecargaManual();
   const [filtro, setFiltro] = useState<Filtro>('todas');
   const [seleccionado, setSeleccionado] = useState<Evento | null>(null);
+  // Alerta que tocó en una notificación push (`features/push/usePush.ts`). Se muestra apenas el
+  // evento está en la lista: si la app recién abre, al terminar de cargar.
+  const { alerta, hogar: hogarDeLaPush } = useLocalSearchParams<{ alerta?: string; hogar?: string }>();
   const { colors } = useTema();
   const styles = useEstilos(crearEstilos);
 
@@ -53,6 +57,14 @@ export function NotificacionesScreen() {
   const deHoy = resto.filter((e) => mismoDia(new Date(e.occurred_at), ahora));
   const anteriores = resto.filter((e) => !mismoDia(new Date(e.occurred_at), ahora)).slice(0, MAX_ANTERIORES);
   const ultimaSenal = eventos[0] ? new Date(eventos[0].occurred_at) : null;
+
+  const deLaPush = alerta && hogarDeLaPush === String(hogar.id)
+    ? eventos.find((e) => String(e.id) === alerta) ?? null
+    : null;
+  const cerrarDetalle = () => {
+    setSeleccionado(null);
+    if (alerta) router.setParams({ alerta: undefined, hogar: undefined });
+  };
 
   const tarjeta = (e: Evento) => (
     <EventoCard key={e.id} evento={e} residente={residente} onPress={setSeleccionado} />
@@ -98,10 +110,10 @@ export function NotificacionesScreen() {
       </ScrollView>
 
       <DetalleAlertaSheet
-        evento={seleccionado}
+        evento={seleccionado ?? deLaPush}
         eventos={eventos}
         hogar={hogar}
-        onCerrar={() => setSeleccionado(null)}
+        onCerrar={cerrarDetalle}
         onResolver={(e) => marcarResuelta(e.id)}
       />
     </SafeAreaView>

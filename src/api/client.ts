@@ -28,6 +28,12 @@ export interface Api {
    * la cuenta todavía no tiene perfil (`POST /me` primero).
    */
   registrarPushToken(token: string): Promise<void>;
+  /**
+   * `DELETE /me/push-token?token=` — al cerrar sesión. El backend lo borra solo si es el
+   * guardado (si el familiar ya entró desde otro celular, no le corta las push a ese). 204
+   * también si no estaba.
+   */
+  borrarPushToken(token: string): Promise<void>;
   /** `GET /hogares/{id}/eventos?limit=&tipo=&desde=&hasta=` (RF13: `desde`/`hasta` ISO 8601,
    * acotan por `occurred_at`; sin ellos, los últimos `limit`). */
   listarEventos(

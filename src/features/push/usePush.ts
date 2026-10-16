@@ -49,9 +49,11 @@ export function usePush({ uid, conPerfil, enPestanas }: Opciones) {
     };
   }, [uid, conPerfil]);
 
-  // Al tocar una notificación (con la app cerrada, en segundo plano o abierta): ir al feed. El
-  // feed se actualiza solo al volver a primer plano (HogarProvider). Todavía no se abre el
-  // detalle de esa alerta: PENDIENTE BACKEND, la push no trae `evento_id` (ver README).
+  // Al tocar una notificación (con la app cerrada, en segundo plano o abierta): ir al feed con el
+  // detalle de esa alerta abierto. El backend manda `evento_id`/`hogar_id` en la `data` (como
+  // strings: FCM no acepta otra cosa); el feed abre el detalle apenas el evento está en la lista,
+  // que se actualiza sola al volver a primer plano (HogarProvider). Una push sin ids (de antes
+  // del 2026-10-15) abre solo el feed.
   const respuesta = Notifications.useLastNotificationResponse();
   const atendida = useRef<string | null>(null);
   useEffect(() => {
@@ -59,7 +61,11 @@ export function usePush({ uid, conPerfil, enPestanas }: Opciones) {
     const id = respuesta.notification.request.identifier;
     if (atendida.current === id) return;
     atendida.current = id;
-    router.navigate('/');
+    const { evento_id, hogar_id } = respuesta.notification.request.content.data ?? {};
+    const params = typeof evento_id === 'string' && typeof hogar_id === 'string'
+      ? { alerta: evento_id, hogar: hogar_id }
+      : {};
+    router.navigate({ pathname: '/', params });
     Notifications.clearLastNotificationResponseAsync().catch(() => {});
   }, [enPestanas, respuesta]);
 }

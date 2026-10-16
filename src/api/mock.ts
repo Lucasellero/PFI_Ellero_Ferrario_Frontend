@@ -392,6 +392,12 @@ export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
       (await familiarActual()).pushToken = token;
     },
 
+    async borrarPushToken(token) {
+      await esperar();
+      const familiar = await familiarActual();
+      if (familiar.pushToken === token) familiar.pushToken = undefined;
+    },
+
     async listarEventos(hogarId, { limit = 200, tipo, desde, hasta } = {}) {
       await esperar();
       const h = await hogarAutorizado(hogarId);
