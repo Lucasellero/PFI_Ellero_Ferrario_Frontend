@@ -689,9 +689,17 @@ una PC de 8 núcleos, y que no se había medido en AWS) y corre en el mismo cont
 API: no correrlo a mano en producción. Si la API no responde pero la instancia está *Running*,
 revisar que tenga la IP elástica (EC2 → Elastic IPs, región **us-east-2**).
 
-**Pendiente:** ver si llegan los desvíos de rutina a las 03:00 (con la `t3.small`); que el
-monitoreo de Beanstalk salga de *Suspended*; borrar la clave de acceso de AWS usada hoy;
-avisarle a Lucas del cambio de instancia y del costo.
+**Segunda caída, mismo día (16:45–17:10 UTC, ~25 min).** Para sacar el monitoreo de
+Beanstalk de *Suspended* se probó salud básica y después *Rebuild environment*. El rebuild
+falló dos veces (la cuenta no permite Launch Configurations, que es lo que eligió Beanstalk) y
+borró la instancia. Arreglo: entorno nuevo **`pfi-lares-prod-2`** creado desde una plantilla
+del viejo, forzando Launch Template y `t3.small`; regla de RDS para su security group;
+intercambio de CNAME con el viejo y borrado del viejo. **La URL de la app no cambió** y el
+monitoreo quedó en verde. Detalle y cómo no repetirlo: `cloud/README.md` del Backend.
+
+**Pendiente:** ver si llegan los desvíos de rutina a las 03:00 (con la `t3.small`); borrar la
+clave de acceso de AWS usada hoy; avisarle a Lucas del entorno nuevo, de la instancia y del
+costo.
 
 ---
 
