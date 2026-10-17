@@ -671,6 +671,28 @@ email y contraseña). El archivo va en el repo: no es secreto y EAS Build lo nec
 03:00; merge y deploy de la rama del backend (Lucas); invitar a Lucas al proyecto de Expo si
 va a hacer builds.
 
+### 2026-10-17 (2) — Incidente: la API de producción estuvo caída ~1 hora
+
+**Qué pasó:** para no esperar a las 03:00, se corrió a mano el proceso diario de la línea base
+dentro del contenedor del backend, para el hogar de prueba con 60 días simulados. En la
+`t3.micro` (1 GB) no terminó en 50 minutos y dejó la API sin responder (12:00–13:15). La
+instancia se reemplazó sola, pero la nueva quedó sin la IP elástica a la que apunta la URL del
+backend (el monitoreo de Beanstalk estaba suspendido desde antes y no la reasoció).
+
+**Arreglo:** IP elástica reasociada con la CLI de AWS (perfil `lares`, usuario IAM `lorenz`) y
+la instancia pasó a **`t3.small`** (2 GB). Ya no entra en el Free Tier: ~US$ 15/mes, a cargo de
+los créditos del Innovation Sandbox. API verificada (`/health` 200). Causa, pasos y cómo no
+repetirlo: `cloud/README.md` del Backend, "Incidente del 2026-10-17".
+
+**Aprendizajes:** el proceso diario es pesado (el README del backend ya decía 42 s por hogar en
+una PC de 8 núcleos, y que no se había medido en AWS) y corre en el mismo contenedor que la
+API: no correrlo a mano en producción. Si la API no responde pero la instancia está *Running*,
+revisar que tenga la IP elástica (EC2 → Elastic IPs, región **us-east-2**).
+
+**Pendiente:** ver si llegan los desvíos de rutina a las 03:00 (con la `t3.small`); que el
+monitoreo de Beanstalk salga de *Suspended*; borrar la clave de acceso de AWS usada hoy;
+avisarle a Lucas del cambio de instancia y del costo.
+
 ---
 
 ## Próximos pasos
