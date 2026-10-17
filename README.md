@@ -647,8 +647,11 @@ email y contraseña). El archivo va en el repo: no es secreto y EAS Build lo nec
   Vinculado desde la app a una cuenta nueva de Lorenzo. Código y API key fuera del repo.
 - **Primera push real del proyecto:** una caída mandada a `POST /devices/events` con la API key
   del kit llegó al Android como "Posible caída detectada". Confirma de punta a punta token,
-  credenciales de Firebase del backend y canal de la app. Inmovilidad alta mandada, sin
-  confirmar todavía.
+  credenciales de Firebase del backend y canal de la app. La de inmovilidad alta también
+  llegó.
+- **Desvíos de rutina en prueba:** `cloud/simular_historial.py` (Backend, nuevo) cargó en el
+  hogar de prueba 60 días de rutina terminando hoy, hoy sin comidas (14.502 eventos). El
+  proceso de las 03:00 del 2026-10-18 tiene que mandar dos push; resultado pendiente.
 - Detalle, pasos para repetirlo y tabla de qué evento avisa qué: `src/features/push/README.md`
   ("Configurar para desarrollo", "Cómo probarlo", "Kit de prueba en producción", "Prueba real
   del 2026-10-17").
@@ -664,8 +667,8 @@ email y contraseña). El archivo va en el repo: no es secreto y EAS Build lo nec
 - **No hay push de "resumen"**: el resumen de rutina se ve en Reportes. Los desvíos de rutina
   sí avisan, pero los emite el proceso diario de las 03:00, no un evento.
 
-**Pendiente:** confirmar la de inmovilidad y probar el resto de la tabla; probar los desvíos de
-rutina; merge y deploy de la rama del backend (Lucas); invitar a Lucas al proyecto de Expo si
+**Pendiente:** probar el resto de la tabla; anotar si llegaron los desvíos de rutina a las
+03:00; merge y deploy de la rama del backend (Lucas); invitar a Lucas al proyecto de Expo si
 va a hacer builds.
 
 ---

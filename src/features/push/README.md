@@ -136,8 +136,12 @@ falta el backend real, así que una cuenta real (Crear cuenta) y un kit real (ve
 6. Cerrar sesión y volver a mandar una caída → no debería llegar (también con el backend nuevo).
 
 Los **desvíos de rutina** no se pueden disparar con un evento: los emite el proceso diario de
-las 03:00 (hora de Argentina) a partir del historial del residente (ver `cloud/README.md`,
-"Correr la línea base"). No hay push de "resumen": el resumen de rutina se ve en Reportes.
+las 03:00 (hora de Argentina) comparando el día anterior con el historial del residente (ver
+`cloud/README.md`, "Correr la línea base"). Para probarlos en un hogar de prueba,
+`cloud/simular_historial.py` del Backend le carga 60 días de rutina terminando en `--hoy`, ese
+día sin comidas; a las 03:00 siguientes llegan "Cambio en la rutina: Hoy no se registró comer
+o beber" y "Día distinto a lo habitual". No hay push de "resumen": el resumen de rutina se ve
+en Reportes (con ese historial también se puede probar esa pantalla).
 
 ## Kit de prueba en producción
 
@@ -158,9 +162,12 @@ Android real (development build `c4420bb6`), backend de AWS (v8, sin la rama
 - **Caída confirmada:** ✅ llegó "Posible caída detectada". Primer push real del proyecto:
   confirma de punta a punta el registro del token, las credenciales de Firebase del backend,
   la API de Cloud Messaging y el canal `alertas` de la app.
-- **Inmovilidad alta:** mandada (201), sin confirmar todavía si se vio la notificación.
+- **Inmovilidad alta:** ✅ llegó "Sin movimiento en el piso".
+- **Desvíos de rutina, en curso:** `simular_historial.py --hoy 2026-10-17` cargó 14.502 eventos
+  (60 días, del 2026-08-19 a hoy, hoy sin comidas). Se esperan las dos push a las 03:00 del
+  2026-10-18. Resultado: pendiente de anotar.
 - Sin probar: inmovilidad post-caída, los casos que no deben avisar, tocar la notificación con
-  el backend nuevo, cerrar sesión, y los desvíos de rutina.
+  el backend nuevo y cerrar sesión.
 
 ## Decisiones
 
@@ -220,7 +227,7 @@ Android real (development build `c4420bb6`), backend de AWS (v8, sin la rama
   a los ajustes del sistema (`Linking.openSettings()`). Va junto con las "Preferencias de
   notificación" de `features/perfil`.
 - ~~Probar en un celular real~~ ✅ (2026-10-17, ver "Prueba real del 2026-10-17"). Falta
-  completar la tabla de "Cómo probarlo" y los desvíos de rutina.
+  completar la tabla de "Cómo probarlo" y anotar el resultado de los desvíos de rutina.
 - **Separar canales** si los desvíos de rutina (llegan a las 03:00) molestan: hoy suenan igual
   que una caída porque van al mismo canal. Sería `alertas` (urgente) y `rutina` (silencioso),
   con `android.channel_id` desde el backend.
