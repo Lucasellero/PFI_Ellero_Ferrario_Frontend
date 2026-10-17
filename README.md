@@ -701,6 +701,24 @@ monitoreo quedó en verde. Detalle y cómo no repetirlo: `cloud/README.md` del B
 clave de acceso de AWS usada hoy; avisarle a Lucas del entorno nuevo, de la instancia y del
 costo.
 
+### 2026-10-17 (3) — Merge a `main`, backend `v9` en producción y Samsung
+
+**Qué se hizo:**
+- Ramas `push-notificaciones-2026-10-15` (app) y `push-token-evento-2026-10-15` (backend)
+  mergeadas a `main` (sin conflictos; typecheck, lint y 135 pruebas del backend en verde).
+- **Backend `v9` desplegado** en `pfi-lares-prod-2`: paquete armado solo con archivos
+  versionados en git (no copiando carpetas, por la filtración de una contraseña que cuenta
+  `cloud/README.md`) y revisado contra secretos antes de subirlo. Verificado: entorno en verde,
+  `/health` 200, `DELETE /me/push-token` publicado. Con esto funcionan abrir la alerta tocada
+  y borrar el token al cerrar sesión.
+- **Samsung A12:** las push solo llegaban con la app abierta. Era el ahorro de batería
+  (Lares "en suspensión"); con "Sin restricciones" llegan en segundo plano.
+
+**Pendiente:** la notificación del desvío de comidas a las 03:00; probar tocar la
+notificación, app cerrada del todo, los casos que no avisan y cerrar sesión; aviso en la app
+cuando la batería restringe a Lares y prioridad alta en el backend
+(`src/features/push/README.md` → Pendiente).
+
 ---
 
 ## Próximos pasos

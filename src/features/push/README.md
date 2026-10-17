@@ -163,11 +163,21 @@ Android real (development build `c4420bb6`), backend de AWS (v8, sin la rama
   confirma de punta a punta el registro del token, las credenciales de Firebase del backend,
   la API de Cloud Messaging y el canal `alertas` de la app.
 - **Inmovilidad alta:** ✅ llegó "Sin movimiento en el piso".
+- **Samsung Galaxy A12: solo llegaban con la app abierta.** El ahorro de batería de Samsung
+  tenía a Lares "en suspensión" y bloqueaba las notificaciones en segundo plano. Con Ajustes
+  → Aplicaciones → Lares → Batería → **Sin restricciones** (y fuera de "Aplicaciones en
+  suspensión"), la caída llegó con la app en segundo plano. Le va a pasar a cualquier
+  familiar con Samsung (y probablemente Xiaomi/Huawei): ver Pendiente.
+- **Backend `v9` desplegado (17:13 UTC):** `DELETE /me/push-token` y `evento_id`/`hogar_id`
+  en la push, en producción. Inmovilidad post-caída mandada después del deploy.
 - **Desvíos de rutina, en curso:** `simular_historial.py --hoy 2026-10-17` cargó 14.502 eventos
-  (60 días, del 2026-08-19 a hoy, hoy sin comidas). Se esperan las dos push a las 03:00 del
-  2026-10-18. Resultado: pendiente de anotar.
-- Sin probar: inmovilidad post-caída, los casos que no deben avisar, tocar la notificación con
-  el backend nuevo y cerrar sesión.
+  (60 días, del 2026-08-19 a hoy, hoy sin comidas). La corrida a mano del mediodía (la que tiró
+  la API) llegó a registrar "Día distinto a lo habitual" y mandó la push, que no llegó porque el
+  Samsung todavía bloqueaba la app; no alcanzó a registrar el de comidas. Se espera "Cambio en
+  la rutina: Hoy no se registró comer o beber" a las 03:00 del 2026-10-18 (el proceso no
+  repite el multivariado). Resultado: pendiente de anotar.
+- Sin probar todavía: tocar la notificación con la `v9` (debería abrir el detalle), app
+  cerrada del todo, los casos que no deben avisar y cerrar sesión.
 
 ## Decisiones
 
@@ -219,10 +229,12 @@ Android real (development build `c4420bb6`), backend de AWS (v8, sin la rama
 
 ## Pendiente
 
-- **Desplegar el backend nuevo.** `DELETE /me/push-token` y los ids en la push están en la
-  rama `push-token-evento-2026-10-15` del Backend (2026-10-15, con pruebas), todavía sin merge
-  ni deploy a AWS. Mientras tanto la app anda igual: el `DELETE` da 405 y se ignora (el token
-  sigue quedando al cerrar sesión), y tocar una push abre solo el feed.
+- ~~Desplegar el backend nuevo~~ ✅ (`v9`, 2026-10-17).
+- **Ahorro de batería (Samsung y otros):** si el sistema tiene a Lares restringida, las alertas
+  no llegan con la app cerrada. Avisarle al familiar en la app (junto con el permiso
+  rechazado) con un botón a los ajustes de batería; y en el backend mandar las alertas con
+  `android.priority = high` y `channel_id = "alertas"` (`messaging.AndroidConfig`), para que
+  Android las entregue al instante aunque el celular esté en reposo.
 - **Permiso rechazado:** mostrar en Perfil que las notificaciones están apagadas, con un botón
   a los ajustes del sistema (`Linking.openSettings()`). Va junto con las "Preferencias de
   notificación" de `features/perfil`.
