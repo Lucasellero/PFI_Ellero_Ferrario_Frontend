@@ -24,7 +24,7 @@ del residente.
 | Pantallas de los mockups (Login, Notificaciones, Detalle de alerta, Reportes, Día en orden) + Perfil | ✅ Hechas, con datos de prueba |
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
-| Notificaciones push (Firebase Cloud Messaging) | 🧪 Código hecho en la app (2026-10-15, solo Android, `expo-notifications`) y app Android registrada en Firebase (2026-10-16) — **sin probar en un celular**: falta el primer *development build*. Pasos en [`src/features/push/README.md`](src/features/push/README.md) |
+| Notificaciones push (Firebase Cloud Messaging) | ✅ **Probado en un Android real** contra AWS (2026-10-17, solo Android, `expo-notifications`, *development build*): llega la de caída. Falta probar desvíos de rutina y desplegar la rama del backend con los ids y el borrado del token. Pasos en [`src/features/push/README.md`](src/features/push/README.md) |
 | Conexión al backend real | ✅ Los 12 métodos de `Api` implementados en `http.ts`, filtros RF13 conectados en Reportes (2026-10-07) — ver [`src/api/README.md`](src/api/README.md) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
@@ -634,6 +634,40 @@ email y contraseña). El archivo va en el repo: no es secreto y EAS Build lo nec
 
 **Pendiente:** `eas init` + primer development build y la prueba en un celular Android.
 
+### 2026-10-16/17 — Development build, kit de prueba y primera push real
+
+**Qué se hizo:**
+- **EAS:** `eas init` creó el proyecto `@totossjgod/lares` (cuenta personal de Lorenzo;
+  `owner` y `projectId` en `app.json`). Primer development build de Android
+  (`c4420bb6-8f03-48fe-851a-30e151bba020`, el link del APK vence el 2026-10-30).
+- **`.env.local`** contra el backend de AWS y Firebase real (no está en git; los valores están
+  en Elastic Beanstalk y en la consola de Firebase).
+- **Kit de prueba `LR-000003`** (1 cámara) dado de alta en la base de producción con
+  `alta_kit.py`: RDS abierto un rato solo a la IP de la PC y cerrado enseguida (verificado).
+  Vinculado desde la app a una cuenta nueva de Lorenzo. Código y API key fuera del repo.
+- **Primera push real del proyecto:** una caída mandada a `POST /devices/events` con la API key
+  del kit llegó al Android como "Posible caída detectada". Confirma de punta a punta token,
+  credenciales de Firebase del backend y canal de la app. Inmovilidad alta mandada, sin
+  confirmar todavía.
+- Detalle, pasos para repetirlo y tabla de qué evento avisa qué: `src/features/push/README.md`
+  ("Configurar para desarrollo", "Cómo probarlo", "Kit de prueba en producción", "Prueba real
+  del 2026-10-17").
+
+**Decisiones y aprendizajes:**
+- **AWS desde la consola web, no con claves de la CLI** en la PC: era una sola vez y no vale la
+  pena dejar credenciales de la cuenta guardadas.
+- **El development build necesita la PC** (`npx expo start`): trae solo la parte nativa. Una
+  app que ande sola (`preview`) queda para más adelante: pide cargar las variables en EAS y
+  permitir `http` (el backend no tiene HTTPS).
+- **La cuenta demo (`ana.gomez@mail.com`) solo existe en modo mock**: con el backend real hace
+  falta una cuenta real.
+- **No hay push de "resumen"**: el resumen de rutina se ve en Reportes. Los desvíos de rutina
+  sí avisan, pero los emite el proceso diario de las 03:00, no un evento.
+
+**Pendiente:** confirmar la de inmovilidad y probar el resto de la tabla; probar los desvíos de
+rutina; merge y deploy de la rama del backend (Lucas); invitar a Lucas al proyecto de Expo si
+va a hacer builds.
+
 ---
 
 ## Próximos pasos
@@ -644,10 +678,9 @@ En orden sugerido:
    no hace falta exactamente "22", alcanza con cualquier LTS ≥20.19.4). ~~Probar la app en los
    celulares con Expo Go contra el backend real~~ ✅ (2026-10-08, ver "Prueba end-to-end en
    celular real" más abajo).
-2. **Push (RF8):** el código ya está (2026-10-15, solo Android). Falta: `eas init` + primer
-   development build y probarlo en un celular Android (la app ya está registrada en Firebase,
-   2026-10-16) — pasos en [`src/features/push/README.md`](src/features/push/README.md).
-   El backend ya tiene borrar el token y los ids en la push (2026-10-15), pero falta mergear
-   y desplegar esa rama. Después: decidir si se suma iOS.
+2. **Push (RF8):** ✅ funcionando en Android (2026-10-17). Falta: probar el resto de los
+   casos y los desvíos de rutina ([`src/features/push/README.md`](src/features/push/README.md)
+   → "Cómo probarlo"), mergear y desplegar la rama `push-token-evento-2026-10-15` del backend,
+   y después decidir si se suma iOS y si se hace el build `preview` (sin PC).
 3. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

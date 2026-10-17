@@ -7,9 +7,10 @@ momento (`POST /devices/events`) y desvíos de rutina con la corrida diaria
 consigue el token de FCM del celular, lo manda a `POST /me/push-token`, lo borra al cerrar
 sesión y abre la alerta que el familiar toca.
 
-**Estado (2026-10-16):** código hecho, typecheck/lint/export sin errores, app Android
-registrada en Firebase (`google-services.json` en la raíz). **Todavía no se probó en un
-celular**: falta el primer development build (pasos de abajo, desde el 3).
+**Estado (2026-10-17):** ✅ **probado en un Android real contra el backend de AWS**: una
+caída de prueba mandada como el kit `LR-000003` llegó como "Posible caída detectada" (ver
+"Prueba real del 2026-10-17"). Faltan: probar los desvíos de rutina (salen a las 03:00), y
+desplegar el backend nuevo para abrir la alerta tocada y borrar el token al cerrar sesión.
 
 | Archivo | Qué es |
 |---|---|
@@ -76,22 +77,90 @@ igual que con Expo Go (`npx expo start` y el celular se conecta al bundler).
    El build tarda unos minutos en la nube y al final da un link/QR para instalar el `.apk` en
    el celular. El perfil `development` está en `eas.json` (APK, distribución interna).
    Alternativa local, si hay Android Studio: `npx expo run:android`.
-4. **Trabajar:** `npx expo start` y abrir el proyecto desde la app instalada (no desde Expo
-   Go). Hay que rehacer el build solo cuando cambia algo nativo (`app.json`, una librería con
+
+   **Primer build ✅ (2026-10-16):** `c4420bb6-8f03-48fe-851a-30e151bba020`, APK de ~270 MB.
+   El link de descarga **vence el 2026-10-30**; después, volver a correr el `build` de arriba
+   (el APK ya instalado sigue andando). Para instalarlo usar el link directo al `.apk` que
+   imprime el build (`https://expo.dev/artifacts/eas/....apk`), no la página del build: esa es
+   privada y en un navegador sin sesión de Expo dice "build not found". Para no tipear la URL
+   en el celular, armar un QR (`npx qrcode -o qr.png "<url>"`) o pasar el `.apk` por cable o
+   Drive. Android pide permitir "instalar apps de origen desconocido".
+4. **Trabajar:** `npx expo start` en la PC y abrir **Lares** en el celular (no Expo Go).
+   - El development build trae solo la parte nativa: las pantallas y la lógica las pide en vivo
+     a la PC. Sin `npx expo start` corriendo, la app no tiene qué mostrar.
+   - La app lista los servidores que encuentra en la red; si no aparece, "Enter URL manually"
+     con `http://<IP de la PC>:8081` (en Mac: `ipconfig getifaddr en0`, o `en5`/el que
+     corresponda si la PC está por cable). Celular y PC en el **mismo router**.
+   - Si no se ven (wifi de invitados, red de la facultad): `npx expo start --tunnel`.
+   - La terminal tiene que decir "Using development build" (si dice Expo Go, apretar `s`).
+   - Las variables salen del `.env.local` de la PC (ver `.env.example`), no de EAS.
+
+   Hay que rehacer el build solo cuando cambia algo nativo (`app.json`, una librería con
    código nativo); para cambios de JS/TS, no.
+
+**Cuenta demo:** `ana.gomez@mail.com` (cualquier contraseña de 6 o más caracteres) existe
+**solo con `EXPO_PUBLIC_API_MODE=mock` y `EXPO_PUBLIC_AUTH_MODE=mock`**. Para probar push hace
+falta el backend real, así que una cuenta real (Crear cuenta) y un kit real (ver abajo).
 
 ## Cómo probarlo
 
 1. Con `EXPO_PUBLIC_API_MODE=http` y `EXPO_PUBLIC_AUTH_MODE=firebase`, iniciar sesión en el
    celular con el development build y aceptar el permiso de notificaciones.
-2. Verificar que el token llegó: en la base, `familiar.push_token` de esa cuenta deja de ser
-   `null`.
-3. Mandar un evento de caída a `POST /devices/events` con la API key del kit (como en la
-   "Prueba end-to-end en celular real" del README raíz). Debería llegar "Posible caída
-   detectada" con la app cerrada, abierta y en segundo plano.
-4. Tocar la notificación → la app abre en Notificaciones con el detalle de la caída encima
+2. Vincular un kit real (ver "Kit de prueba en producción") o pedir que te inviten como
+   familiar a un hogar que ya tenga uno.
+3. Simular el kit: mandar eventos a `POST /devices/events` con su API key. Cada tipo:
+
+   | Evento | `metadata` | Push esperada |
+   |---|---|---|
+   | `fall` | `{"confirmed": true}` | "Posible caída detectada" |
+   | `immobility` | `{"severity": "alta", "duration_s": 240}` | "Sin movimiento en el piso" |
+   | `immobility` | `{"severity": "alta", "trigger": "post_fall_sospecha"}` | "Sin movimiento después de una posible caída" |
+   | `fall` | `{"confirmed": false}` (caída parcial) | Ninguna: queda como sospecha |
+   | `immobility` | `{"severity": "baja"}` | Ninguna |
+   | `activity` | `{"activity_label": "Cooking"}` | Ninguna (nunca avisa) |
+
+   ```bash
+   curl -X POST "$URL_BACKEND/devices/events" \
+     -H "Content-Type: application/json" -H "X-API-Key: $API_KEY_DEL_KIT" \
+     -d "[{\"video_id\":\"cam1\",\"event_type\":\"fall\",\"video_timestamp_s\":0,
+           \"wall_clock_ts\":$(date +%s),\"event_id\":\"prueba-$(date +%s)\",
+           \"metadata\":{\"confirmed\":true}}]"
+   ```
+   Respuesta esperada: `201 {"insertados":1,"duplicados":0}`. `video_id` es el
+   `identificador_local` de una cámara del kit; `event_id` distinto en cada prueba (si se
+   repite, el backend lo toma como reenvío y no avisa de nuevo). El evento queda guardado en el
+   hogar: después se puede marcar como resuelto desde la app.
+4. Probar con la app abierta, en segundo plano y cerrada.
+5. Tocar la notificación → la app abre en Notificaciones con el detalle de la caída encima
    (con el backend nuevo desplegado; si no, solo el feed).
-5. Cerrar sesión → `familiar.push_token` vuelve a `null` (también con el backend nuevo).
+6. Cerrar sesión y volver a mandar una caída → no debería llegar (también con el backend nuevo).
+
+Los **desvíos de rutina** no se pueden disparar con un evento: los emite el proceso diario de
+las 03:00 (hora de Argentina) a partir del historial del residente (ver `cloud/README.md`,
+"Correr la línea base"). No hay push de "resumen": el resumen de rutina se ve en Reportes.
+
+## Kit de prueba en producción
+
+**`LR-000003`** (1 cámara, `cam1`), creado el 2026-10-17 con `cloud/alta_kit.py` contra la
+base de AWS y vinculado desde la app a la cuenta de prueba de Lorenzo. El código de
+vinculación y la API key **no están en el repo** (en la base solo quedan los hashes): los
+tiene Lorenzo. Cómo se creó, por si hace falta otro: la base (RDS `pfi-lares-db`) no es
+accesible desde internet, así que se habilitó un rato "Publicly accessible" con una regla de
+entrada al 5432 **solo para la IP de la PC**, se corrió
+`DATABASE_URL=<la de Elastic Beanstalk> python alta_kit.py --camaras 1` desde `cloud/`, y se
+cerró enseguida (regla borrada, "Not publicly accessible"; verificado que el puerto ya no
+responde). Mismo procedimiento que la migración de v8 en `cloud/README.md`.
+
+## Prueba real del 2026-10-17
+
+Android real (development build `c4420bb6`), backend de AWS (v8, sin la rama
+`push-token-evento-2026-10-15`), cuenta de prueba de Lorenzo con el kit `LR-000003`:
+- **Caída confirmada:** ✅ llegó "Posible caída detectada". Primer push real del proyecto:
+  confirma de punta a punta el registro del token, las credenciales de Firebase del backend,
+  la API de Cloud Messaging y el canal `alertas` de la app.
+- **Inmovilidad alta:** mandada (201), sin confirmar todavía si se vio la notificación.
+- Sin probar: inmovilidad post-caída, los casos que no deben avisar, tocar la notificación con
+  el backend nuevo, cerrar sesión, y los desvíos de rutina.
 
 ## Decisiones
 
@@ -132,6 +201,11 @@ igual que con Expo Go (`npx expo start` y el celular se conecta al bundler).
 - **Cerrar sesión espera al `DELETE` como máximo 3 s** (`ESPERA_MAXIMA_BORRADO_MS`). Si falla o
   no hay red, sale igual: el token queda hasta que otro inicio de sesión lo pise. Mientras
   espera no se muestra nada en pantalla (normalmente son décimas de segundo).
+- **Build `preview` (sin PC) pendiente a propósito.** Para una app que ande sola hacen falta dos
+  cosas que el development build no pide: cargar las variables `EXPO_PUBLIC_*` en EAS (el
+  `.env.local` no viaja al build, git lo ignora) y permitir tráfico `http` (el backend no tiene
+  HTTPS y Android lo bloquea fuera de desarrollo; `expo-build-properties` con
+  `usesCleartextTraffic`, o HTTPS en el backend). Para probar push alcanza el development build.
 - **Se mantiene la actualización cada 30 s** del feed (`HogarProvider`): sigue haciendo falta
   en Expo Go/iOS, y el backend no manda push de todo (no hay push de actividad normal). Se
   puede espaciar una vez probadas las push.
@@ -145,5 +219,10 @@ igual que con Expo Go (`npx expo start` y el celular se conecta al bundler).
 - **Permiso rechazado:** mostrar en Perfil que las notificaciones están apagadas, con un botón
   a los ajustes del sistema (`Linking.openSettings()`). Va junto con las "Preferencias de
   notificación" de `features/perfil`.
-- **Probar en un celular real** (pasos de arriba) y anotar el resultado en la Bitácora.
+- ~~Probar en un celular real~~ ✅ (2026-10-17, ver "Prueba real del 2026-10-17"). Falta
+  completar la tabla de "Cómo probarlo" y los desvíos de rutina.
+- **Separar canales** si los desvíos de rutina (llegan a las 03:00) molestan: hoy suenan igual
+  que una caída porque van al mismo canal. Sería `alertas` (urgente) y `rutina` (silencioso),
+  con `android.channel_id` desde el backend.
+- **Build `preview`** para usar la app sin PC (ver Decisiones).
 - **iOS** (ver Decisiones).
