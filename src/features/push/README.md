@@ -176,6 +176,12 @@ Android real (development build `c4420bb6`), backend de AWS (v8, sin la rama
   Samsung todavía bloqueaba la app; no alcanzó a registrar el de comidas. Se espera "Cambio en
   la rutina: Hoy no se registró comer o beber" a las 03:00 del 2026-10-18 (el proceso no
   repite el multivariado). Resultado: pendiente de anotar.
+- **Push de desvío forzada:** ✅ llegó "Cambio en la rutina: Hoy no se registró comer o
+  beber", mandada desde el contenedor con `alertas.texto_desvio` + `enviar_push_alerta` para
+  los tokens del hogar 3 (sin correr el proceso diario ni registrar nada). Confirma el texto y
+  el envío; el cálculo de la línea base se prueba a las 03:00. Para entrar al contenedor del
+  entorno nuevo hubo que abrir el 22 del security group de Beanstalk **solo** para la lista de
+  prefijos de EC2 Instance Connect (`pl-03915406641cb1f53`).
 - Sin probar todavía: tocar la notificación con la `v9` (debería abrir el detalle), app
   cerrada del todo, los casos que no deben avisar y cerrar sesión.
 
