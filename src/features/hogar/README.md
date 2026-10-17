@@ -29,9 +29,12 @@ const { refrescando, onRefrescar } = useRecargaManual(); // "tirar para actualiz
 - **Sin librería de datos** (React Query, etc.). Con 3 pantallas y una sola lista alcanza un
   contexto; si aparecen paginación o caché por pantalla, reevaluar.
 
-- **Actualización automática (provisoria hasta las push):** con la app en primer plano pide los
-  eventos cada 30 s (`INTERVALO_ACTUALIZACION_MS`) y una vez apenas vuelve a primer plano
-  (`AppState`). En segundo plano no consulta. Es silenciosa: sin spinner y, si falla, queda la
+- **Actualización automática:** con la app en primer plano pide los eventos cada 30 s
+  (`INTERVALO_ACTUALIZACION_MS`), una vez apenas vuelve a primer plano (`AppState`, también al
+  tocar una push) y una vez al llegar una push con la app abierta (2026-10-15,
+  `addNotificationReceivedListener`, solo si `PUSH_DISPONIBLE`). En segundo plano no consulta.
+  Los 30 s se mantienen aunque haya push: siguen haciendo falta en Expo Go/iOS y el backend no
+  manda push de todo (ver `features/push/README.md`). Es silenciosa: sin spinner y, si falla, queda la
   lista anterior. De paso, los "hace 5 min" se recalculan en cada vuelta.
 - **Las alertas resueltas no se "desresuelven":** si una consulta salió antes de marcar una
   alerta y vuelve después, `fusionarEventos` conserva el `resuelta: true` local para que la
@@ -44,7 +47,8 @@ const { refrescando, onRefrescar } = useRecargaManual(); // "tirar para actualiz
 
 ## Pendiente
 
-- Refrescar al recibir una push (RF8); con eso, el intervalo de 30 s puede espaciarse o quitarse.
+- ~~Refrescar al recibir una push (RF8)~~ ✅ (2026-10-15). Una vez probadas las push en un
+  celular, evaluar espaciar el intervalo de 30 s.
 - Paginación cuando un hogar acumule mucha más actividad que los últimos 200. El backend ya
   tiene filtros `tipo`/`desde`/`hasta` (RF13, 2026-10-07) — a propósito no se usan acá: este
   contexto es el feed general reciente (home, badge, "última actividad" del detalle), no un

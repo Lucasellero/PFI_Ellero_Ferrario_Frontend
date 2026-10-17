@@ -22,6 +22,7 @@ import { createContext, use, useEffect, useState, type ReactNode } from 'react';
 import { api, configurarTokenProvider } from '@/api/client';
 import { EMAIL_DEMO } from '@/api/mock';
 import { AUTH_MODE } from '@/config';
+import { dejarDeRecibirPush } from '@/features/push/push';
 import {
   validarConfirmacion,
   validarContrasenaNueva,
@@ -190,6 +191,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
 
     async cerrarSesion() {
+      // Antes de salir: sin esto, el celular seguiría recibiendo las alertas de la cuenta.
+      await dejarDeRecibirPush();
       if (AUTH_MODE === 'firebase') {
         await signOut(obtenerAuth());
         return;

@@ -24,7 +24,7 @@ del residente.
 | Pantallas de los mockups (Login, Notificaciones, Detalle de alerta, Reportes, Día en orden) + Perfil | ✅ Hechas, con datos de prueba |
 | Capa de API (mock ↔ backend real con una variable de entorno) | ✅ Hecha |
 | Login real con Firebase Authentication | ✅ Hecho (2026-10-07), detrás de `EXPO_PUBLIC_AUTH_MODE=firebase` · sin probar en un celular |
-| Notificaciones push (Firebase Cloud Messaging) | ⏳ Backend listo (`POST /me/push-token`, push en desvíos y en caídas/inmovilidad) — falta todo del lado de la app, requiere *development build* (no anda en Expo Go) |
+| Notificaciones push (Firebase Cloud Messaging) | ✅ **Probado en un Android real** contra AWS (2026-10-17, solo Android, `expo-notifications`, *development build*): llega la de caída. Falta probar desvíos de rutina y desplegar la rama del backend con los ids y el borrado del token. Pasos en [`src/features/push/README.md`](src/features/push/README.md) |
 | Conexión al backend real | ✅ Los 12 métodos de `Api` implementados en `http.ts`, filtros RF13 conectados en Reportes (2026-10-07) — ver [`src/api/README.md`](src/api/README.md) |
 | Identidad de marca (nombre, logo, paleta, ícono y splash) | ✅ Hecha, según la sección "Branding" del informe |
 | Modo claro y oscuro (sigue al celular o se elige en Perfil) | ✅ Hecho |
@@ -57,13 +57,13 @@ Definida en el informe (cap. 3, sección "Branding"). Lo que usa la app:
 | Lenguaje | **TypeScript** | Los tipos de la API (`src/api/types.ts`) calcan los del backend, así el editor marca cualquier campo mal escrito antes de correr la app. |
 | Navegación | **Expo Router** (rutas por archivos en `src/app/`) | Lo estándar en Expo hoy. |
 | Login | **Firebase Authentication** (email + contraseña) | Definido en el informe (cap. 4). Hoy mockeado. |
-| Push | **Firebase Cloud Messaging** | Definido en el informe (RF8). Hoy pendiente. |
+| Push | **Firebase Cloud Messaging**, recibidas con `expo-notifications` | Definido en el informe (RF8). Solo Android por ahora (ver [`src/features/push/README.md`](src/features/push/README.md)). |
 | Íconos | `@expo/vector-icons` (set Feather) | Incluido en Expo Go; el estilo de línea coincide con los mockups. |
 
-**Expo Go vs. development build:** todo lo que hay hoy corre en **Expo Go**. Cuando se sumen
-las push (FCM) va a hacer falta un *development build* (un "Expo Go propio" de la app, se
-instala una vez en el celular y después se trabaja igual). Está anotado en
-[Próximos pasos](#próximos-pasos).
+**Expo Go vs. development build:** todo corre en **Expo Go** menos las push (FCM), que
+necesitan un *development build* (un "Expo Go propio" de la app, se instala una vez en el
+celular y después se trabaja igual). En Expo Go la app anda igual, solo que no registra token
+ni recibe push. Cómo armarlo: [`src/features/push/README.md`](src/features/push/README.md).
 
 ---
 
@@ -78,7 +78,8 @@ npm install
 npx expo start
 ```
 
-Escanear el QR con Expo Go (Android) o con la cámara (iOS).
+Escanear el QR con Expo Go (Android) o con la cámara (iOS). Para probar las push hace falta el
+*development build* en vez de Expo Go: ver [`src/features/push/README.md`](src/features/push/README.md).
 
 **Probar en modo demo:**
 - **Cuenta con datos:** `ana.gomez@mail.com` con cualquier contraseña de 6 o más caracteres →
@@ -128,7 +129,8 @@ src/
 │   ├── eventos/          Lógica común de eventos: severidad, textos, formato, tarjeta, detalle
 │   ├── notificaciones/   Home: estado del día, filtros, feed
 │   ├── reportes/         Rutina vs. lo habitual + eventos del período
-│   └── perfil/           Datos de la cuenta, cerrar sesión
+│   ├── perfil/           Datos de la cuenta, cerrar sesión
+│   └── push/             Notificaciones push (RF8): token de FCM, canal, tocar una notificación
 ├── components/           Componentes visuales genéricos (Botón, Chip, CampoTexto, BarraSuperior...)
 ├── lib/                  Utilidades sin interfaz (validaciones de formularios)
 ├── api/                  Acceso a datos: tipos, cliente HTTP, mock
@@ -140,7 +142,7 @@ docs/                     Diseños que cruzan app y backend (ej. vinculacion-kit
 ```
 
 **Regla de dependencias:** `app/` → `features/` → `components/`, `lib/`, `api/`, `theme/`. Una
-feature puede usar `auth/`, `cuenta/`, `eventos/` y `hogar/` (son compartidas); el resto de las
+feature puede usar `auth/`, `cuenta/`, `eventos/`, `hogar/` y `push/` (son compartidas); el resto de las
 features no se importan entre sí. Ninguna pantalla llama a `fetch` directo: todo pasa por `src/api`.
 
 ---
@@ -557,6 +559,148 @@ ver "Próximos pasos" → punto 2) y HTTPS (decisión tomada de no hacerlo para 
 limitaciones ya documentadas (sin calibrar con cámara real, texto "0 min" si los eventos de
 prueba no tienen heartbeats).
 
+### 2026-10-15 — Notificaciones push en la app (RF8, solo Android)
+
+**Qué se hizo** (detalle y pasos de configuración en
+[`src/features/push/README.md`](src/features/push/README.md)):
+- Nuevo `features/push/`: crea el canal `alertas`, pide permiso, obtiene el token de FCM y lo
+  manda a `POST /me/push-token` (nuevo `api.registrarPushToken`, también en el mock) apenas
+  hay perfil; lo reenvía si FCM lo rota. Tocar una notificación abre el feed. Con la app
+  abierta la notificación se muestra igual y `HogarProvider` actualiza el feed en el momento.
+- `app.json`: `android.package`/`ios.bundleIdentifier` = `ar.edu.uade.lares`,
+  `android.googleServicesFile` y el plugin de `expo-notifications` (ícono monocromo, verde de
+  marca, canal por defecto `alertas`). Nuevo `eas.json` con perfiles `development` y `preview`
+  (APK, distribución interna).
+- Dependencias nuevas: `expo-notifications` y `expo-dev-client`. De paso, `npx expo install
+  --fix` subió 4 paquetes que estaban algunas versiones de parche atrás (`expo`,
+  `expo-linking`, `expo-router`, `expo-splash-screen`) para hacer el primer build alineado;
+  `expo-doctor` 21/21.
+- Verificado: `npm run typecheck`, `npm run lint` y `npx expo export --platform android` sin
+  errores. **No probado en un celular.**
+
+**Decisiones:**
+- **Solo Android por ahora**, decidido por el equipo. Por eso `expo-notifications` y no
+  `@react-native-firebase/messaging`: en Android ya da el token de FCM que espera el backend, es
+  el módulo de Expo y resuelve permisos, canal y toques sin otra librería. En iOS ese token es
+  de APNs y no sirve para `firebase-admin`; sumar iOS implica cambiar a RN Firebase o tocar el
+  backend, además de la cuenta paga de Apple Developer.
+- **Identificador `ar.edu.uade.lares`:** el equipo no tenía uno; se eligió este. Cambiarlo
+  antes de registrar la app Android en Firebase, después ya no se puede.
+- **`google-services.json` se commitea** (no es secreto, EAS Build lo necesita en el repo).
+- **Los 30 s de actualización del feed se mantienen** hasta probar las push.
+
+**Pendiente:** registrar la app Android en Firebase y commitear `google-services.json`;
+`eas init` + primer `eas build --profile development --platform android`; probar en un celular
+(pasos en el README del módulo). Dos **PENDIENTE BACKEND** nuevos en
+[`src/api/README.md`](src/api/README.md): `evento_id`/`hogar_id` en la push (para abrir la
+alerta exacta) y borrar el token al cerrar sesión.
+
+### 2026-10-15 (2) — Borrar el token al cerrar sesión y abrir la alerta tocada (RF8)
+
+**Qué se hizo:** los dos `PENDIENTE BACKEND` que había dejado la entrada anterior, de punta a
+punta.
+- **Backend** (rama `push-token-evento-2026-10-15` del repo Backend, **sin merge ni deploy**):
+  `DELETE /me/push-token?token=` (borra solo si es el token guardado) y `evento_id`/`hogar_id`
+  en la `data` de cada push, de caídas/inmovilidad y de desvíos de rutina. 8 pruebas nuevas,
+  135/135 pasando. Detalle en `cloud/README.md` → "Cómo seguir" → 3.
+- **App:** `cerrarSesion` llama a `DELETE /me/push-token` antes de salir (nuevo
+  `api.borrarPushToken`, espera máxima de 3 s), y tocar una notificación abre el detalle de
+  esa alerta en el feed (`?alerta=&hogar=` en la ruta, lo lee `NotificacionesScreen`).
+- Verificado: `npm run typecheck`, `npm run lint` y `npx expo export --platform android` sin
+  errores. No probado en un celular (sigue faltando el development build).
+
+**Decisiones:**
+- **El `DELETE` borra solo si el token coincide** con el guardado. Con un token por familiar,
+  si inició sesión en otro celular, cerrar sesión en el viejo no le corta las push al nuevo.
+  El token va como query param porque un `DELETE` con body no lo soportan bien todos los
+  clientes.
+- **El detalle de la alerta tocada sale de la ruta**, no de un estado: funciona igual con la app
+  cerrada, cuando el feed todavía está cargando.
+- **Compatible con el backend desplegado hoy:** sin el deploy, el `DELETE` da 405 y se ignora, y
+  una push sin ids abre solo el feed.
+
+**Pendiente:** merge y deploy del backend (Lucas); lo demás sigue igual que en la entrada
+anterior (Firebase, `eas init`, development build, prueba en celular).
+
+### 2026-10-16 — App Android registrada en Firebase
+
+**Qué se hizo:** se registró la app Android `ar.edu.uade.lares` en el proyecto
+`pfi-ellero-ferrario` (junto a la app web `pfi-test` del login) y se commiteó el
+`google-services.json` en la raíz, que es a donde apunta `android.googleServicesFile` de
+`app.json`. Verificado que el archivo es de ese proyecto y de ese paquete.
+
+**Decisiones:** sin certificado SHA-1 (solo lo piden el login con Google o con teléfono; acá es
+email y contraseña). El archivo va en el repo: no es secreto y EAS Build lo necesita.
+
+**Pendiente:** `eas init` + primer development build y la prueba en un celular Android.
+
+### 2026-10-16/17 — Development build, kit de prueba y primera push real
+
+**Qué se hizo:**
+- **EAS:** `eas init` creó el proyecto `@totossjgod/lares` (cuenta personal de Lorenzo;
+  `owner` y `projectId` en `app.json`). Primer development build de Android
+  (`c4420bb6-8f03-48fe-851a-30e151bba020`, el link del APK vence el 2026-10-30).
+- **`.env.local`** contra el backend de AWS y Firebase real (no está en git; los valores están
+  en Elastic Beanstalk y en la consola de Firebase).
+- **Kit de prueba `LR-000003`** (1 cámara) dado de alta en la base de producción con
+  `alta_kit.py`: RDS abierto un rato solo a la IP de la PC y cerrado enseguida (verificado).
+  Vinculado desde la app a una cuenta nueva de Lorenzo. Código y API key fuera del repo.
+- **Primera push real del proyecto:** una caída mandada a `POST /devices/events` con la API key
+  del kit llegó al Android como "Posible caída detectada". Confirma de punta a punta token,
+  credenciales de Firebase del backend y canal de la app. La de inmovilidad alta también
+  llegó.
+- **Desvíos de rutina en prueba:** `cloud/simular_historial.py` (Backend, nuevo) cargó en el
+  hogar de prueba 60 días de rutina terminando hoy, hoy sin comidas (14.502 eventos). El
+  proceso de las 03:00 del 2026-10-18 tiene que mandar dos push; resultado pendiente.
+- Detalle, pasos para repetirlo y tabla de qué evento avisa qué: `src/features/push/README.md`
+  ("Configurar para desarrollo", "Cómo probarlo", "Kit de prueba en producción", "Prueba real
+  del 2026-10-17").
+
+**Decisiones y aprendizajes:**
+- **AWS desde la consola web, no con claves de la CLI** en la PC: era una sola vez y no vale la
+  pena dejar credenciales de la cuenta guardadas.
+- **El development build necesita la PC** (`npx expo start`): trae solo la parte nativa. Una
+  app que ande sola (`preview`) queda para más adelante: pide cargar las variables en EAS y
+  permitir `http` (el backend no tiene HTTPS).
+- **La cuenta demo (`ana.gomez@mail.com`) solo existe en modo mock**: con el backend real hace
+  falta una cuenta real.
+- **No hay push de "resumen"**: el resumen de rutina se ve en Reportes. Los desvíos de rutina
+  sí avisan, pero los emite el proceso diario de las 03:00, no un evento.
+
+**Pendiente:** probar el resto de la tabla; anotar si llegaron los desvíos de rutina a las
+03:00; merge y deploy de la rama del backend (Lucas); invitar a Lucas al proyecto de Expo si
+va a hacer builds.
+
+### 2026-10-17 (2) — Incidente: la API de producción estuvo caída ~1 hora
+
+**Qué pasó:** para no esperar a las 03:00, se corrió a mano el proceso diario de la línea base
+dentro del contenedor del backend, para el hogar de prueba con 60 días simulados. En la
+`t3.micro` (1 GB) no terminó en 50 minutos y dejó la API sin responder (12:00–13:15). La
+instancia se reemplazó sola, pero la nueva quedó sin la IP elástica a la que apunta la URL del
+backend (el monitoreo de Beanstalk estaba suspendido desde antes y no la reasoció).
+
+**Arreglo:** IP elástica reasociada con la CLI de AWS (perfil `lares`, usuario IAM `lorenz`) y
+la instancia pasó a **`t3.small`** (2 GB). Ya no entra en el Free Tier: ~US$ 15/mes, a cargo de
+los créditos del Innovation Sandbox. API verificada (`/health` 200). Causa, pasos y cómo no
+repetirlo: `cloud/README.md` del Backend, "Incidente del 2026-10-17".
+
+**Aprendizajes:** el proceso diario es pesado (el README del backend ya decía 42 s por hogar en
+una PC de 8 núcleos, y que no se había medido en AWS) y corre en el mismo contenedor que la
+API: no correrlo a mano en producción. Si la API no responde pero la instancia está *Running*,
+revisar que tenga la IP elástica (EC2 → Elastic IPs, región **us-east-2**).
+
+**Segunda caída, mismo día (16:45–17:10 UTC, ~25 min).** Para sacar el monitoreo de
+Beanstalk de *Suspended* se probó salud básica y después *Rebuild environment*. El rebuild
+falló dos veces (la cuenta no permite Launch Configurations, que es lo que eligió Beanstalk) y
+borró la instancia. Arreglo: entorno nuevo **`pfi-lares-prod-2`** creado desde una plantilla
+del viejo, forzando Launch Template y `t3.small`; regla de RDS para su security group;
+intercambio de CNAME con el viejo y borrado del viejo. **La URL de la app no cambió** y el
+monitoreo quedó en verde. Detalle y cómo no repetirlo: `cloud/README.md` del Backend.
+
+**Pendiente:** ver si llegan los desvíos de rutina a las 03:00 (con la `t3.small`); borrar la
+clave de acceso de AWS usada hoy; avisarle a Lucas del entorno nuevo, de la instancia y del
+costo.
+
 ---
 
 ## Próximos pasos
@@ -567,9 +711,9 @@ En orden sugerido:
    no hace falta exactamente "22", alcanza con cualquier LTS ≥20.19.4). ~~Probar la app en los
    celulares con Expo Go contra el backend real~~ ✅ (2026-10-08, ver "Prueba end-to-end en
    celular real" más abajo).
-2. **Push (RF8):** el backend ya tiene `POST /me/push-token` y dispara push en desvíos de
-   rutina y en caídas/inmovilidad (`cloud/README.md` → punto 3, 2026-10-07). Falta: pasar a
-   *development build* (no anda en Expo Go), registrar el token del celular al loguearse y
-   abrir el detalle de la alerta al tocar la notificación.
+2. **Push (RF8):** ✅ funcionando en Android (2026-10-17). Falta: probar el resto de los
+   casos y los desvíos de rutina ([`src/features/push/README.md`](src/features/push/README.md)
+   → "Cómo probarlo"), mergear y desplegar la rama `push-token-evento-2026-10-15` del backend,
+   y después decidir si se suma iOS y si se hace el build `preview` (sin PC).
 3. **Opcional:** cargar una fuente propia (p. ej. Poppins con `expo-font`) para acercarse más a
    los mockups ([`src/theme/README.md`](src/theme/README.md)).

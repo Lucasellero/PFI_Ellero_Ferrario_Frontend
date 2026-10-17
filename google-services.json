@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "3916100752",
+    "project_id": "pfi-ellero-ferrario",
+    "storage_bucket": "pfi-ellero-ferrario.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:3916100752:android:439fbe21a23041da351415",
+        "android_client_info": {
+          "package_name": "ar.edu.uade.lares"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApx7SP7YRoFiTyKMzGJ12e_7OCBGv5ZHw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

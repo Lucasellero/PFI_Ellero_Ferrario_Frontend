@@ -1,6 +1,6 @@
 # `features/notificaciones/` — Home de la app
 
-Pestaña principal. Cubre **RF8** (ver las alertas; la push en sí está pendiente),
+Pestaña principal. Cubre **RF8** (ver las alertas; la push en sí está en `features/push/`),
 **RF1/RF3/RF4/RF7** (cómo se muestra cada tipo de evento) y **RF13** parcial (historial
 reciente). Mockups **02 · Notificaciones**, **03 · Detalle de alerta** y **05 · Día en orden**.
 
@@ -40,5 +40,7 @@ recarga; además la lista se actualiza sola cada 30 s y al volver a la app (ver
 
 ## Pendiente
 
-- Abrir este detalle directamente al tocar una notificación push (depende del *development
-  build*, ver `features/auth/README.md`).
+- ~~Abrir este detalle directamente al tocar una notificación push~~ ✅ (2026-10-15): la
+  pantalla lee `?alerta=&hogar=` de la ruta (los pone `features/push/usePush.ts`) y abre el
+  detalle de ese evento apenas está en la lista. Necesita el backend con los ids en la push
+  (rama `push-token-evento-2026-10-15`, sin deploy todavía); sin ellos abre solo el feed.

@@ -32,6 +32,10 @@ export function crearHttpApi(obtenerToken: () => Promise<string | null>): Api {
   return {
     obtenerPerfil: () => request<Perfil>('/me'),
     crearPerfil: (datos) => request<Perfil>('/me', { method: 'POST', body: JSON.stringify(datos) }),
+    registrarPushToken: (token) =>
+      request<void>('/me/push-token', { method: 'POST', body: JSON.stringify({ token }) }),
+    borrarPushToken: (token) =>
+      request<void>(`/me/push-token?${new URLSearchParams({ token }).toString()}`, { method: 'DELETE' }),
     listarEventos: (hogarId, { limit = 200, tipo, desde, hasta } = {}) => {
       const params = new URLSearchParams({ limit: String(limit) });
       if (tipo) params.set('tipo', tipo);

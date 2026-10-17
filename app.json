@@ -7,7 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "lares",
     "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "ar.edu.uade.lares"
+    },
     "android": {
+      "package": "ar.edu.uade.lares",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FDFBF8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -39,11 +44,25 @@
             "image": "./assets/images/splash-icon-dark.png"
           }
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#1F5D4B",
+          "defaultChannel": "alertas"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0fe1df67-02f9-4c11-a3f8-1790e973eed2"
+      }
+    },
+    "owner": "totossjgod"
   }
 }

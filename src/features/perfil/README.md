@@ -31,7 +31,8 @@ Rutas (fuera de las pestañas, ver `src/app/`): `/editar-residente`, `/editar-ca
 
 ## Pendiente
 
-- **Preferencias de notificación** (cuando existan las push).
+- **Preferencias de notificación**: como mínimo, avisar si el permiso de notificaciones está
+  rechazado y llevar a los ajustes del sistema (ver `features/push/README.md` → Pendiente).
 - **Selector de hogar** si un familiar accede a más de uno (ver `features/hogar/README.md`).
 - Probar las pantallas nuevas desde la app en un celular (verificado con `expo export` que
   compilan y las rutas registran bien; no probado interactuando con ellas).
