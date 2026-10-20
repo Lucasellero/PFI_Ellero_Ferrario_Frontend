@@ -731,8 +731,8 @@ revisado contra secretos.
 **Recordatorio:** los códigos de `src/api/README.md` (`7K3P-9QXM`, etc.) existen solo en modo
 mock; contra el backend real dan 404 y cuentan para el límite.
 
-**Pendiente:** desplegar la `v10` (el contador está en memoria: el deploy además destraba a
-quien esté bloqueado).
+**Desplegado:** `v10` en producción (2026-10-20 02:37 UTC), verificada en verde. El deploy
+también reinició el contador, así que el bloqueo se levantó.
 
 ---
 
