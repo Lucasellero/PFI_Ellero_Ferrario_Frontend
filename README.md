@@ -719,6 +719,21 @@ notificación, app cerrada del todo, los casos que no avisan y cerrar sesión; a
 cuando la batería restringe a Lares y prioridad alta en el backend
 (`src/features/push/README.md` → Pendiente).
 
+### 2026-10-19 — Límite de vinculación del kit: de 5 a 20 intentos
+
+**Qué se hizo:** probando desde la app se llegó al 429 "Demasiados intentos" (5 códigos
+inexistentes en 15 minutos). El límite pasó a **20** en el backend
+(`MAX_INTENTOS_FALLIDOS`, con pruebas nuevas: no tenía), en el mock de la app y en
+`docs/vinculacion-kit.md`. Con 32⁸ ≈ 10¹² códigos posibles, 20 intentos por ventana siguen sin
+permitir adivinar uno. Backend: 138 pruebas en verde; paquete `v10` armado desde git y
+revisado contra secretos.
+
+**Recordatorio:** los códigos de `src/api/README.md` (`7K3P-9QXM`, etc.) existen solo en modo
+mock; contra el backend real dan 404 y cuentan para el límite.
+
+**Pendiente:** desplegar la `v10` (el contador está en memoria: el deploy además destraba a
+quien esté bloqueado).
+
 ---
 
 ## Próximos pasos

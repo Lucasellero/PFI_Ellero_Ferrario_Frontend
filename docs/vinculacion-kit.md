@@ -428,8 +428,9 @@ quien lo configuró que te invite desde su app.").
 ### Seguridad
 
 - El código se guarda **hasheado** (como hoy la API key).
-- **Límite de intentos** por familiar y por IP (ej. 5 fallidos → esperar 15 min): con 8
-  caracteres no se adivina, pero evita barridos.
+- **Límite de intentos** por familiar: **20 fallidos en 15 min** → 429 (eran 5 hasta el
+  2026-10-19; en las pruebas desde la app era fácil llegar a 5 tipeando mal). Con 8
+  caracteres no se adivina, pero evita barridos. Por IP no se implementó.
 - El 404 no distingue "no existe" de "mal tipeado".
 - **Un solo uso**: una vez vinculado, el mismo QR no sirve para otra cuenta (409). Los demás
   familiares entran por invitación.

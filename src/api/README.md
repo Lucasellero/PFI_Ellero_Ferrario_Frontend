@@ -69,8 +69,8 @@ cada endpoint y seguridad) y cambios a la base de datos en
 cuenta en el mock pero no está vinculado a ningún hogar — invitarlo desde la cuenta demo
 funciona; cualquier otro email da 404 "todavía no tiene cuenta".
 
-Después de 5 códigos inexistentes seguidos el mock responde 429 (demasiados intentos), como
-debería hacer el backend.
+Después de 20 códigos inexistentes seguidos el mock responde 429 (demasiados intentos), como
+el backend (20 en 15 minutos; eran 5 hasta el 2026-10-19).
 
 ### Forma propuesta de lo que falta
 

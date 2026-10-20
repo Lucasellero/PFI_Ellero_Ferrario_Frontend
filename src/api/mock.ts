@@ -264,8 +264,9 @@ interface FamiliarMock {
   hogares: { hogarId: number; rol: string }[];
 }
 
-/** Intentos fallidos de vinculación antes de bloquear (el backend debería limitar igual). */
-const MAX_INTENTOS = 5;
+/** Intentos fallidos de vinculación antes de bloquear: el mismo límite que el backend
+ * (`MAX_INTENTOS_FALLIDOS` en `cloud/app/routers/kits.py`, 20 desde el 2026-10-19). */
+const MAX_INTENTOS = 20;
 
 export function crearMockApi(obtenerToken: () => Promise<string | null>): Api {
   const hogares = new Map<number, HogarMock>();
